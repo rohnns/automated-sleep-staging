@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sleep-staging-pipeline"
+version = "0.1.0"
+description = "Modular end-to-end clinical EEG sleep staging pipeline for Sleep-EDF Expanded."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Sleep Staging Pipeline Contributors" }]
+keywords = ["eeg", "sleep-staging", "mne", "pytorch", "clinical"]
+dependencies = [
+    "mne>=1.6",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+    "scikit-learn>=1.4",
+    "scipy>=1.11",
+    "torch>=2.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["sleep_staging*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

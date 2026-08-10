@@ -1,0 +1,34 @@
+# Bytecode / caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local data (Sleep-EDF files are large — keep out of VCS)
+data/raw/
+data/processed/
+
+# Offline analysis artifacts
+analysis/outputs/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Environment secrets
+.env
+.env.*

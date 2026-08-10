@@ -1,0 +1,129 @@
+# Central configuration for the sleep-staging pipeline.
+# Paths are resolved relative to the project root unless absolute.
+#
+# Preprocessing defaults are driven by analysis/dataset_statistics.py findings:
+# - fixed 30 s epochs (hypnogram bouts are variable-length)
+# - long Wake tails → crop with 30 min buffer around sleep
+# - R&K stages 3+4 → AASM N3; Movement / '?' marked IGNORE (not deleted)
+# - keep EEG/EOG/EMG staging channels; drop resp/temp/stim by default
+# - 100 Hz European recordings → 0.5–30 Hz band-pass; 50 Hz notch skipped at Nyquist
+# - per-recording channel-wise z-score (robust also supported)
+
+acquisition:
+  data_root: D:/SleepEDFX
+  preload: false
+  stim_channel: "Event marker"
+  infer_types: true
+  mne_verbose: ERROR
+
+preprocessing:
+  epoch_duration_sec: 30
+  min_remainder_sec: 30
+  wake_crop:
+    enabled: true
+    minutes: 30
+    require_sleep: true
+  stage_map:
+    unmapped_policy: ignore
+    ignore_label: IGNORE
+  channels:
+    - Fpz-Cz
+    - Pz-Oz
+    - horizontal
+    - submental
+  filter:
+    enabled: true
+    l_freq: 0.5
+    h_freq: 30.0
+    notch_freqs: [50.0]
+  normalize:
+    enabled: true
+    method: zscore
+    eps: 1.0e-8
+
+# Phase 3 — representations.
+# representation: raw | bandpower | time_frequency
+# Band power: 5 bands × (log-abs + relative) → (N, C, 10). No gamma (30 Hz LP).
+encodings:
+  representation: raw
+  ignore_label: IGNORE
+  ignore_index: -100
+  raw:
+    dtype: float32
+  bandpower:
+    method: welch
+    include_log_absolute: true
+    include_relative: true
+    include_ratios: false
+    eps: 1.0e-10
+    expected_sfreq: 100.0
+    bands:
+      delta: [0.5, 4.0]
+      theta: [4.0, 8.0]
+      alpha: [8.0, 12.0]
+      sigma: [12.0, 16.0]
+      beta: [16.0, 30.0]
+    welch:
+      nperseg: 400
+      noverlap: 200
+      nfft: 400
+      window: hamming
+      average: median
+      detrend: constant
+      scaling: density
+  time_frequency:
+    method: stft          # stft | cwt (swap without changing model input layout)
+    stft:
+      n_fft: 256
+      hop_length: 100
+      win_length: 256
+      window: hann
+      fmin: 0.5
+      fmax: 30.0
+      power: 2
+      log_scale: true
+      eps: 1.0e-10
+      expected_sfreq: 100.0
+      dtype: float32
+    cwt:
+      wavelet: morlet
+      fmin: 0.5
+      fmax: 30.0
+      n_freqs: 30
+      output: magnitude
+      log_scale: true
+
+# Phase 4a — controlled representation comparison infrastructure.
+# Keep these fixed across Raw, BandPower, and STFT for the initial SC/Fpz-Cz bake-off.
+experiment:
+  split:
+    cohort: SC
+    channels: [Fpz-Cz]
+    seed: 42
+    train_ratio: 0.70
+    val_ratio: 0.15
+    test_ratio: 0.15
+  train:
+    seed: 42
+    batch_size: 32
+    max_epochs: 20
+    learning_rate: 0.001
+    weight_decay: 0.0
+    num_workers: 0
+    ignore_index: -100
+    drop_ignore_from_loader: true
+    primary_metric: macro_f1
+    class_weighting: balanced
+    early_stopping_patience: 5
+    checkpoint_dir: outputs/checkpoints/phase4a
+  model:
+    in_channels: 1
+    n_classes: 5
+    n_band_features: 10
+  classical_baseline:
+    enabled: true
+    max_iter: 1000
+
+logging:
+  level: INFO
+  format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
