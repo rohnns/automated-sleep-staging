@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from analysis.dataset_statistics import (
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts" / "utilities"))
+from dataset_statistics import (
     AnnotationSegment,
     compute_sleep_boundaries,
 )

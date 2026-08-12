@@ -7,17 +7,16 @@ Production-oriented, modular clinical EEG sleep staging pipeline for the
 
 1. **Data Acquisition** ← complete
 2. **Preprocessing** ← complete
-3. **Encodings / Representations** ← architecture (algorithms next)
-4. Models *(not yet implemented)*
-5. Validation *(not yet implemented)*
-6. Metrics *(not yet implemented)*
-7. Dashboard *(not yet implemented)*
+3. **Representations** ← complete (Raw, BandPower, STFT encoders)
+4. **Models** ← complete (baseline CNN-1D, MLP, CNN-2D)
+5. **Evaluation** ← complete
+6. **Dashboard** ← complete (Streamlit)
 
 ## Requirements
 
 - Python 3.12+
 - MNE (EDF loading / preprocessing)
-- PyTorch will be introduced in the Models phase
+- PyTorch (models & training)
 
 ## Installation
 
@@ -108,17 +107,7 @@ pipeline = PreprocessPipeline([
 preprocessed = pipeline.run(recording, preload=True)
 ```
 
-## Preprocessing order
-
-1. **AnnotationUnroller** — variable-length hypnogram bouts → fixed 30 s labels on the global epoch grid
-2. **SleepBoundaryDetector** — sleep onset / offset (no cropping)
-3. **ChannelSelector** — config-driven channel picks (before expensive filtering)
-4. **SignalFilter** — band-pass / notch on the continuous recording (edge transients settle in wake tails)
-5. **WakeCropper** — optional crop to sleep ± buffer, snapped to the 30 s grid
-6. **StageMapper** — R&K → AASM; Movement / `?` → `IGNORE` (not deleted)
-7. **RecordingNormalizer** — per-recording `zscore` or `robust` on the cropped window
-
-## Encodings architecture (Phase 3)
+## Representations (Phase 3)
 
 | Piece | Role |
 |-------|------|
@@ -130,12 +119,22 @@ preprocessed = pipeline.run(recording, preload=True)
 | `EncodedDataset` | Per-recording output + `RepresentationMetadata` |
 
 ```python
-from sleep_staging.encodings import build_encoder
+from sleep_staging.representations import build_encoder
 from sleep_staging.config import load_settings
 
 settings = load_settings("configs/default.yaml")
-encoder = build_encoder(settings.encodings)  # skeleton; encode() raises until DSP lands
+encoder = build_encoder(settings.encodings)
 ```
+
+## Preprocessing order
+
+1. **AnnotationUnroller** — variable-length hypnogram bouts → fixed 30 s labels on the global epoch grid
+2. **SleepBoundaryDetector** — sleep onset / offset (no cropping)
+3. **ChannelSelector** — config-driven channel picks (before expensive filtering)
+4. **SignalFilter** — band-pass / notch on the continuous recording (edge transients settle in wake tails)
+5. **WakeCropper** — optional crop to sleep ± buffer, snapped to the 30 s grid
+6. **StageMapper** — R&K → AASM; Movement / `?` → `IGNORE` (not deleted)
+7. **RecordingNormalizer** — per-recording `zscore` or `robust` on the cropped window
 
 ## MNE boundaries
 
@@ -145,7 +144,7 @@ encoder = build_encoder(settings.encodings)  # skeleton; encode() raises until D
 | `sleep_staging.acquisition.metadata` | **Yes** (read-only) | Pulls fields from `Raw` |
 | `SleepRecording.raw` / `.annotations` | **Yes** | Downstream preprocessing uses these |
 | `preprocessing` transforms | **Yes** (via `raw`) | Crop / pick / filter / normalize |
-| `encodings` | **No** (after epoch handoff) | NumPy only; MNE stopped at preprocessing |
+| `representations` | **No** (after epoch handoff) | NumPy only; MNE stopped at preprocessing |
 | `RecordingMetadata`, `utils`, `config`, `common` | **No** | Paths, IDs, YAML, logging |
 
 Annotations have a **single authoritative store**: `recording.raw.annotations`
@@ -156,15 +155,31 @@ Annotations have a **single authoritative store**: `recording.raw.annotations`
 
 ```text
 sleep-staging-pipeline/
-├── analysis/                 # Offline dataset statistics (not runtime)
 ├── configs/default.yaml
+├── main.py                          # CLI entry point
+├── app.py                           # Streamlit dashboard
 ├── src/sleep_staging/
-│   ├── acquisition/          # Phase 1 — EDF + hypnogram loading
-│   ├── preprocessing/        # Phase 2 — composable transforms
-│   ├── encodings/            # Phase 3 — representations (arch)
-│   ├── config/               # Central typed settings
-│   └── common/               # Shared logging helpers
+│   ├── acquisition/                 # Phase 1 — EDF + hypnogram loading
+│   ├── preprocessing/               # Phase 2 — composable transforms
+│   ├── representations/             # Phase 3 — encoders (raw, bandpower, STFT)
+│   ├── evaluation/                  # Evaluation & output utilities
+│   ├── training/                    # Phase 4 — PyTorch training
+│   ├── models/                      # Baseline model architectures
+│   ├── dashboard/                   # Dashboard package marker
+│   ├── config/                      # Central typed settings
+│   └── common/                      # Shared logging helpers
+├── scripts/
+│   ├── experiments/                 # Full experiment runners
+│   ├── evaluation/                  # Checkpoint evaluation & export
+│   ├── utilities/                   # Dataset stats, class distribution, etc.
+│   └── smoke/                       # Smoke tests for pipeline stages
 ├── tests/
+├── outputs/
+│   ├── checkpoints/                 # Trained model checkpoints
+│   ├── predictions/                 # Exported predictions
+│   ├── reports/                     # Generated reports
+│   ├── figures/                     # Generated figures
+│   └── phase4_outputs/              # Phase 4 exported artifacts
 └── pyproject.toml
 ```
 

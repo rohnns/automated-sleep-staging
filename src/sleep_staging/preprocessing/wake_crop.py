@@ -102,7 +102,9 @@ class WakeCropper(Transform):
             state.raw.load_data()
 
         # Crop signals; MNE also trims annotations to the retained window.
-        state.raw.crop(tmin=tmin, tmax=tmax, include_tmax=True)
+        max_raw_time = float(state.raw.times[-1])
+        tmax_crop = min(tmax, max_raw_time)
+        state.raw.crop(tmin=tmin, tmax=tmax_crop, include_tmax=True)
 
         if state.epoch_labels is not None:
             state.epoch_labels = state.epoch_labels.filtered(

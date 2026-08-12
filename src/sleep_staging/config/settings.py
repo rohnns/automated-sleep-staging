@@ -3,7 +3,7 @@
 Configuration stays intentionally simple: a YAML file mapped to frozen
 dataclasses. Do not introduce Hydra, Pydantic, or a plugin system here.
 
-Preprocessing defaults are informed by ``analysis/dataset_statistics.py``:
+Preprocessing defaults are informed by ``scripts/utilities/dataset_statistics.py``:
 30 s epochs, ~30 min wake buffers, R&K→AASM mapping, EEG/EOG/EMG channels,
 0.5–30 Hz band-pass + optional line notch, per-recording z-score.
 """
@@ -70,26 +70,50 @@ class StageMapSettings:
 
 @dataclass(frozen=True, slots=True)
 class ChannelSelectSettings:
-    """Channel selection by name and/or type."""
+    """Channel selection by name and/or type.
 
-    names: tuple[str, ...] | None = (
-        "Fpz-Cz",
-        "Pz-Oz",
-        "horizontal",
-        "submental",
-    )
+    The primary Sleep-EDF SC staging path defaults to EEG (Fpz-Cz, Pz-Oz) and
+    EOG (horizontal) only. SC submental EMG is a preprocessed 1 Hz envelope, so
+    it is excluded from the default 100 Hz waveform encodings. It can still be
+    selected explicitly (or via ``include_emg``) for specialized experiments.
+    Auxiliary channels (respiration, temperature, stim) should not be selected
+    by default; they can be chosen explicitly by name or type in config.
+    """
+
+    names: tuple[str, ...] | None = None
     types: tuple[str, ...] | None = None
     require_all_names: bool = True
+    include_emg: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class FilterSettings:
-    """Band-pass / notch filter settings."""
+    """Band-pass / notch filter settings.
+
+    Channel-type-specific edges with a global fallback. Project baseline values
+    for Sleep-EDF SC (engineering choices, not universal requirements):
+      - EEG: 0.5–30 Hz
+      - EOG: 0.5–15 Hz (configurable; literature also uses ~0.5–10 or ~0.5–30)
+      - EMG: 10–30 Hz (only relevant if EMG is selected; SC submental is a
+        ~1 Hz envelope and is excluded from the primary path)
+
+    Unknown / auxiliary channel types do not receive band-pass filtering.
+    Notch filtering is configured separately and applied globally when usable.
+    """
 
     enabled: bool = True
+    # Global fallback (keeps existing behavior if per-type fields are not set)
     l_freq: float | None = 0.5
     h_freq: float | None = 30.0
     notch_freqs: tuple[float, ...] = (50.0,)
+
+    # Per-channel-type band-pass (None → fall back to global l_freq/h_freq)
+    eeg_l_freq: float | None = 0.5
+    eeg_h_freq: float | None = 30.0
+    eog_l_freq: float | None = 0.5
+    eog_h_freq: float | None = 15.0
+    emg_l_freq: float | None = 10.0
+    emg_h_freq: float | None = 30.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,6 +123,68 @@ class NormalizeSettings:
     enabled: bool = True
     method: str = "zscore"
     eps: float = 1e-8
+
+
+@dataclass(frozen=True, slots=True)
+class BadChannelSettings:
+    """Settings for non-destructive bad-channel marking."""
+
+    enabled: bool = True
+    flat_std_threshold: float = 1e-8
+    nan_frac_threshold: float = 0.01
+    saturation_frac_threshold: float = 0.99
+    # Per-type thresholds (EEG/EOG/EMG)
+    eeg_high_std_threshold: float = 1e-2
+    eeg_peak_to_peak_threshold: float = 1e-3
+    eog_high_std_threshold: float = 2e-4
+    eog_peak_to_peak_threshold: float = 3e-3
+    emg_high_std_threshold: float = 5e-4
+    emg_peak_to_peak_threshold: float = 5e-3
+    mark_mne_bads: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class ReferenceSettings:
+    """Reference transform settings.
+
+    mode: 'original' | 'common_average'
+    """
+
+    mode: str = "original"
+
+
+@dataclass(frozen=True, slots=True)
+class ICASettings:
+    """MNE ICA settings for EEG cleaning (optional EOG-guided exclusion).
+
+    Defaults target the primary Sleep-EDF SC montage (2 EEG + 1 EOG).
+    ``eog_measure='correlation'`` is the project baseline because z-score
+    EOG detection is unreliable with only two ICA components.
+    """
+
+    enabled: bool = True
+    n_components: int | None = None
+    random_state: int = 42
+    method: str = "fastica"
+    max_iter: int = 500
+    detect_eog: bool = True
+    eog_threshold: float = 0.8
+    eog_measure: str = "correlation"
+
+
+@dataclass(frozen=True, slots=True)
+class AmplitudeRejectSettings:
+    """Epoch-level peak-to-peak amplitude rejection settings.
+
+    Thresholds are in Volts (MNE). They are configurable engineering baselines
+    pending validation on Sleep-EDF SC — not claimed physiological standards.
+    ``None`` disables checks for that channel type.
+    """
+
+    enabled: bool = True
+    eeg_peak_to_peak: float | None = 5.0e-4
+    eog_peak_to_peak: float | None = 1.0e-3
+    emg_peak_to_peak: float | None = 1.0e-3
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,6 +198,12 @@ class PreprocessingSettings:
     channels: ChannelSelectSettings = field(default_factory=ChannelSelectSettings)
     filter: FilterSettings = field(default_factory=FilterSettings)
     normalize: NormalizeSettings = field(default_factory=NormalizeSettings)
+    bad_channel: BadChannelSettings = field(default_factory=BadChannelSettings)
+    reference: ReferenceSettings = field(default_factory=ReferenceSettings)
+    ica: ICASettings = field(default_factory=ICASettings)
+    amplitude_reject: AmplitudeRejectSettings = field(
+        default_factory=AmplitudeRejectSettings
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -353,33 +445,47 @@ def _parse_wake_crop(wake_raw: Mapping[str, Any]) -> WakeCropSettings:
 
 
 def _parse_channels(channels_raw: Mapping[str, Any] | Sequence[Any]) -> ChannelSelectSettings:
-    """Accept either a bare channel list or a mapping with names/types."""
-    defaults = ChannelSelectSettings()
+    """Accept either a bare channel list or a mapping with names/types.
+
+    If names are omitted, construct a reproducible primary SC staging set:
+    EEG: Fpz-Cz, Pz-Oz; EOG: horizontal; optionally EMG: submental when
+    ``include_emg`` is true for non-primary experiments.
+    """
+    # Default staging names (EEG + EOG)
+    base_names = ("Fpz-Cz", "Pz-Oz", "horizontal")
 
     if isinstance(channels_raw, Sequence) and not isinstance(channels_raw, (str, bytes, Mapping)):
         return ChannelSelectSettings(
             names=_optional_str_tuple(channels_raw),
             types=None,
             require_all_names=True,
+            include_emg=False,
         )
 
     if not isinstance(channels_raw, Mapping):
         raise ConfigurationError("preprocessing.channels must be a list or mapping")
 
-    names = (
-        _optional_str_tuple(channels_raw["names"])
-        if "names" in channels_raw
-        else defaults.names
-    )
+    include_emg = bool(channels_raw.get("include_emg", False))
+
+    if "names" in channels_raw:
+        names = _optional_str_tuple(channels_raw["names"])
+    else:
+        # Build default names respecting include_emg
+        names_list = list(base_names)
+        if include_emg:
+            names_list.append("submental")
+        names = tuple(names_list)
+
     types = (
         _optional_str_tuple(channels_raw["types"])
         if "types" in channels_raw
-        else defaults.types
+        else None
     )
     return ChannelSelectSettings(
         names=names,
         types=types,
         require_all_names=bool(channels_raw.get("require_all_names", True)),
+        include_emg=include_emg,
     )
 
 
@@ -403,11 +509,59 @@ def _parse_stage_map(stage_raw: Mapping[str, Any]) -> StageMapSettings:
     )
 
 
+def _parse_amplitude_reject(raw: Mapping[str, Any]) -> AmplitudeRejectSettings:
+    def _optional_positive(key: str, default: float | None) -> float | None:
+        if key not in raw:
+            return default
+        value = raw.get(key)
+        if value is None:
+            return None
+        parsed = float(value)
+        if parsed <= 0:
+            raise ConfigurationError(f"amplitude_reject.{key} must be positive when set")
+        return parsed
+
+    return AmplitudeRejectSettings(
+        enabled=bool(raw.get("enabled", True)),
+        eeg_peak_to_peak=_optional_positive("eeg_peak_to_peak", 5.0e-4),
+        eog_peak_to_peak=_optional_positive("eog_peak_to_peak", 1.0e-3),
+        emg_peak_to_peak=_optional_positive("emg_peak_to_peak", 1.0e-3),
+    )
+
+
+def _parse_ica(ica_raw: Mapping[str, Any]) -> ICASettings:
+    method = str(ica_raw.get("method", "fastica"))
+    if method not in {"fastica", "infomax", "picard"}:
+        raise ConfigurationError(
+            "ica.method must be 'fastica', 'infomax', or 'picard'"
+        )
+    eog_measure = str(ica_raw.get("eog_measure", "correlation"))
+    if eog_measure not in {"correlation", "zscore"}:
+        raise ConfigurationError("ica.eog_measure must be 'correlation' or 'zscore'")
+
+    n_components_raw = ica_raw.get("n_components", None)
+    n_components = None if n_components_raw is None else int(n_components_raw)
+    if n_components is not None and n_components < 1:
+        raise ConfigurationError("ica.n_components must be >= 1 when set")
+
+    return ICASettings(
+        enabled=bool(ica_raw.get("enabled", True)),
+        n_components=n_components,
+        random_state=int(ica_raw.get("random_state", 42)),
+        method=method,
+        max_iter=int(ica_raw.get("max_iter", 500)),
+        detect_eog=bool(ica_raw.get("detect_eog", True)),
+        eog_threshold=float(ica_raw.get("eog_threshold", 0.8)),
+        eog_measure=eog_measure,
+    )
+
+
 def _load_preprocessing(raw: Mapping[str, Any]) -> PreprocessingSettings:
     wake_raw = _require_mapping(raw, "wake_crop")
     stage_raw = _require_mapping(raw, "stage_map")
     filter_raw = _require_mapping(raw, "filter")
     norm_raw = _require_mapping(raw, "normalize")
+    bad_raw = _require_mapping(raw, "bad_channel")
 
     channels_value = raw.get("channels", {})
     if channels_value is None:
@@ -441,12 +595,60 @@ def _load_preprocessing(raw: Mapping[str, Any]) -> PreprocessingSettings:
                 filter_raw.get("notch_freqs", [50.0]),
                 default=(50.0,),
             ),
+            eeg_l_freq=(
+                None
+                if filter_raw.get("eeg_l_freq", 0.5) is None
+                else float(filter_raw.get("eeg_l_freq", 0.5))
+            ),
+            eeg_h_freq=(
+                None
+                if filter_raw.get("eeg_h_freq", 30.0) is None
+                else float(filter_raw.get("eeg_h_freq", 30.0))
+            ),
+            eog_l_freq=(
+                None
+                if filter_raw.get("eog_l_freq", 0.5) is None
+                else float(filter_raw.get("eog_l_freq", 0.5))
+            ),
+            eog_h_freq=(
+                None
+                if filter_raw.get("eog_h_freq", 15.0) is None
+                else float(filter_raw.get("eog_h_freq", 15.0))
+            ),
+            emg_l_freq=(
+                None
+                if filter_raw.get("emg_l_freq", 10.0) is None
+                else float(filter_raw.get("emg_l_freq", 10.0))
+            ),
+            emg_h_freq=(
+                None
+                if filter_raw.get("emg_h_freq", 30.0) is None
+                else float(filter_raw.get("emg_h_freq", 30.0))
+            ),
         ),
         normalize=NormalizeSettings(
             enabled=bool(norm_raw.get("enabled", True)),
             method=method,
             eps=float(norm_raw.get("eps", 1e-8)),
         ),
+        bad_channel=BadChannelSettings(
+            enabled=bool(bad_raw.get("enabled", True)),
+            flat_std_threshold=float(bad_raw.get("flat_std_threshold", 1e-8)),
+            nan_frac_threshold=float(bad_raw.get("nan_frac_threshold", 0.01)),
+            saturation_frac_threshold=float(bad_raw.get("saturation_frac_threshold", 0.99)),
+            eeg_high_std_threshold=float(bad_raw.get("eeg_high_std_threshold", 1e-2)),
+            eeg_peak_to_peak_threshold=float(bad_raw.get("eeg_peak_to_peak_threshold", 1e-3)),
+            eog_high_std_threshold=float(bad_raw.get("eog_high_std_threshold", 2e-4)),
+            eog_peak_to_peak_threshold=float(bad_raw.get("eog_peak_to_peak_threshold", 3e-3)),
+            emg_high_std_threshold=float(bad_raw.get("emg_high_std_threshold", 5e-4)),
+            emg_peak_to_peak_threshold=float(bad_raw.get("emg_peak_to_peak_threshold", 5e-3)),
+            mark_mne_bads=bool(bad_raw.get("mark_mne_bads", True)),
+        ),
+        reference=ReferenceSettings(
+            mode=str(_require_mapping(raw, "reference").get("mode", "original"))
+        ),
+        ica=_parse_ica(_require_mapping(raw, "ica")),
+        amplitude_reject=_parse_amplitude_reject(_require_mapping(raw, "amplitude_reject")),
     )
 
 

@@ -14,7 +14,7 @@ from typing import Mapping
 
 import torch
 
-from sleep_staging.encodings.types import EncodedDatasetCollection
+from sleep_staging.representations.types import EncodedDatasetCollection
 from sleep_staging.models.factory import build_baseline_model
 from sleep_staging.training.dataset import EpochDataset
 from sleep_staging.training.split import SubjectSplit, assert_no_subject_leakage, subject_wise_split

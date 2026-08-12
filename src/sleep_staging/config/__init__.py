@@ -3,11 +3,13 @@
 from sleep_staging.config.exceptions import ConfigurationError
 from sleep_staging.config.settings import (
     AcquisitionSettings,
+    AmplitudeRejectSettings,
     BandPowerEncodingSettings,
     CWTEncodingSettings,
     ChannelSelectSettings,
     EncodingSettings,
     FilterSettings,
+    ICASettings,
     LoggingSettings,
     NormalizeSettings,
     PipelineSettings,
@@ -23,12 +25,14 @@ from sleep_staging.config.settings import (
 
 __all__ = [
     "AcquisitionSettings",
+    "AmplitudeRejectSettings",
     "BandPowerEncodingSettings",
     "CWTEncodingSettings",
     "ChannelSelectSettings",
     "ConfigurationError",
     "EncodingSettings",
     "FilterSettings",
+    "ICASettings",
     "LoggingSettings",
     "NormalizeSettings",
     "PipelineSettings",

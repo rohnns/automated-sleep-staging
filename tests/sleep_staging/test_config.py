@@ -19,8 +19,23 @@ def test_load_preprocessing_settings() -> None:
     assert prep.wake_crop.minutes == 30.0
     assert prep.stage_map.unmapped_policy == "ignore"
     assert prep.stage_map.ignore_label == "IGNORE"
-    assert prep.channels.names == ("Fpz-Cz", "Pz-Oz", "horizontal", "submental")
+    assert prep.channels.names == ("Fpz-Cz", "Pz-Oz", "horizontal")
     assert prep.filter.notch_freqs == (50.0,)
+    assert prep.filter.eeg_h_freq == 30.0
+    assert prep.filter.eog_h_freq == 15.0
+    assert not hasattr(prep.filter, "apply_bandpass_to_unknown")
+    assert prep.reference.mode == "original"
+    assert prep.ica.enabled is True
+    assert prep.ica.random_state == 42
+    assert prep.ica.method == "fastica"
+    assert prep.ica.n_components is None
+    assert prep.ica.detect_eog is True
+    assert prep.ica.eog_measure == "correlation"
+    assert prep.ica.eog_threshold == 0.8
+    assert prep.amplitude_reject.enabled is True
+    assert prep.amplitude_reject.eeg_peak_to_peak == 5.0e-4
+    assert prep.amplitude_reject.eog_peak_to_peak == 1.0e-3
+    assert prep.amplitude_reject.emg_peak_to_peak == 1.0e-3
     assert prep.normalize.method == "zscore"
     enc = settings.encodings
     assert enc.representation == "raw"

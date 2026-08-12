@@ -5,8 +5,13 @@
 # - fixed 30 s epochs (hypnogram bouts are variable-length)
 # - long Wake tails → crop with 30 min buffer around sleep
 # - R&K stages 3+4 → AASM N3; Movement / '?' marked IGNORE (not deleted)
-# - keep EEG/EOG/EMG staging channels; drop resp/temp/stim by default
-# - 100 Hz European recordings → 0.5–30 Hz band-pass; 50 Hz notch skipped at Nyquist
+# - primary SC staging path uses only EEG/EOG at 100 Hz
+# - SC submental EMG is a 1 Hz preprocessed envelope (not a 100 Hz waveform),
+#   so it is excluded from primary Raw/STFT/BandPower encodings
+# - auxiliary channels (including EMG) remain opt-in via explicit config
+# - 100 Hz European recordings → type-specific band-pass (EEG 0.5–30 Hz;
+#   EOG 0.5–15 Hz project baseline; EMG only if selected); 50 Hz notch skipped at Nyquist
+# - EOG 0.5–15 Hz is a configurable engineering baseline, not an AASM/Sleep-EDF mandate
 # - per-recording channel-wise z-score (robust also supported)
 
 acquisition:
@@ -27,23 +32,65 @@ preprocessing:
     unmapped_policy: ignore
     ignore_label: IGNORE
   channels:
-    - Fpz-Cz
-    - Pz-Oz
-    - horizontal
-    - submental
+    # Primary default staging channels: EEG (Fpz-Cz, Pz-Oz) + EOG (horizontal).
+    # Keep include_emg=false for SC primary encodings because SC EMG is 1 Hz envelope.
+    include_emg: false
   filter:
     enabled: true
     l_freq: 0.5
     h_freq: 30.0
+    eeg_l_freq: 0.5
+    eeg_h_freq: 30.0
+    # EOG cutoff is a project engineering baseline (overridable). Literature
+    # uses multiple EOG passbands (e.g. ~0.5–10 Hz or up to ~30 Hz).
+    eog_l_freq: 0.5
+    eog_h_freq: 15.0
+    emg_l_freq: 10.0
+    emg_h_freq: 30.0
     notch_freqs: [50.0]
   normalize:
     enabled: true
     method: zscore
     eps: 1.0e-8
+  bad_channel:
+    enabled: true
+    flat_std_threshold: 1.0e-8
+    nan_frac_threshold: 0.01
+    saturation_frac_threshold: 0.99
+    # Per-type thresholds (EEG/EOG/EMG)
+    eeg_high_std_threshold: 1.0e-2
+    eeg_peak_to_peak_threshold: 1.0e-3
+    eog_high_std_threshold: 2.0e-4
+    eog_peak_to_peak_threshold: 3.0e-3
+    emg_high_std_threshold: 5.0e-4
+    emg_peak_to_peak_threshold: 5.0e-3
+    mark_mne_bads: true
+  reference:
+    mode: original
+    ica:
+    # MNE ICA on selected EEG; optional EOG-guided component exclusion.
+    # With SC's 2 EEG channels, rank is at most 2. correlation scoring is the
+    # project baseline for EOG detection (zscore is unreliable at this rank).
+    enabled: true
+    n_components: null
+    random_state: 42
+    method: fastica
+    max_iter: 500
+    detect_eog: true
+    eog_threshold: 0.8
+    eog_measure: correlation
+  amplitude_reject:
+    # Epoch peak-to-peak rejection in Volts (MNE). Configurable engineering
+    # baselines only — must be validated on Sleep-EDF SC before finalizing.
+    enabled: true
+    eeg_peak_to_peak: 5.0e-4
+    eog_peak_to_peak: 1.0e-3
+    emg_peak_to_peak: 1.0e-3
 
 # Phase 3 — representations.
 # representation: raw | bandpower | time_frequency
 # Band power: 5 bands × (log-abs + relative) → (N, C, 10). No gamma (30 Hz LP).
+# Config key kept as 'encodings' for backward compatibility; Python package is 'representations'
 encodings:
   representation: raw
   ignore_label: IGNORE

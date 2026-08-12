@@ -3,11 +3,13 @@
 Transforms are independent and composable. Default order::
 
     AnnotationUnroller → SleepBoundaryDetector → ChannelSelector →
-    SignalFilter → WakeCropper → StageMapper → RecordingNormalizer
+    BadChannelDetector → (optional Reference) → SignalFilter → ICA →
+    WakeCropper → StageMapper → AmplitudeEpochRejector → RecordingNormalizer
 
 This package does **not** create ML encodings, tensors, or train models.
 """
 
+from sleep_staging.preprocessing.amplitude_reject import AmplitudeEpochRejector
 from sleep_staging.preprocessing.annotation_unroller import (
     AnnotationUnroller,
     unroll_annotations,
@@ -30,7 +32,9 @@ from sleep_staging.preprocessing.exceptions import (
     TransformError,
 )
 from sleep_staging.preprocessing.filtering import SignalFilter
+from sleep_staging.preprocessing.ica import ICATransform
 from sleep_staging.preprocessing.normalization import RecordingNormalizer
+from sleep_staging.preprocessing.reference import ReferenceTransform
 from sleep_staging.preprocessing.pipeline import (
     PreprocessPipeline,
     build_default_pipeline,
@@ -56,9 +60,11 @@ from sleep_staging.preprocessing.types import (
     Transform,
 )
 from sleep_staging.preprocessing.wake_crop import WakeCropper
+from sleep_staging.preprocessing.bad_channels import BadChannelDetector
 
 __all__ = [
     "AASM_STAGES",
+    "AmplitudeEpochRejector",
     "AnnotationUnroller",
     "ChannelSelector",
     "DEFAULT_CHANNEL_NAMES",
@@ -66,12 +72,14 @@ __all__ = [
     "DEFAULT_SLEEP_LABELS",
     "IGNORE_LABEL",
     "EpochLabels",
+    "ICATransform",
     "MissingChannelsError",
     "NoSleepBoundaryError",
     "PreprocessPipeline",
     "PreprocessedRecording",
     "PreprocessingError",
     "RecordingNormalizer",
+    "ReferenceTransform",
     "SignalFilter",
     "SleepBoundaries",
     "SleepBoundaryDetector",
@@ -79,6 +87,7 @@ __all__ = [
     "Transform",
     "TransformError",
     "WakeCropper",
+    "BadChannelDetector",
     "align_crop_window",
     "build_default_pipeline",
     "ceil_to_epoch_grid",

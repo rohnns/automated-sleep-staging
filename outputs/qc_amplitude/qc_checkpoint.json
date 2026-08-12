@@ -1,0 +1,3997 @@
+{
+  "done": {
+    "SC4001E0-PSG.edf": {
+      "n_epochs": 841,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 58,
+        "N2": 250,
+        "N3": 220,
+        "REM": 125,
+        "W": 188
+      }
+    },
+    "SC4002E0-PSG.edf": {
+      "n_epochs": 1128,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 59,
+        "N2": 373,
+        "N3": 297,
+        "REM": 215,
+        "W": 183
+      }
+    },
+    "SC4011E0-PSG.edf": {
+      "n_epochs": 1103,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 109,
+        "N2": 562,
+        "N3": 105,
+        "REM": 170,
+        "W": 157
+      }
+    },
+    "SC4012E0-PSG.edf": {
+      "n_epochs": 1186,
+      "n_rejected": 1,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 1
+      },
+      "stage_counts": {
+        "N1": 92,
+        "N2": 660,
+        "N3": 96,
+        "REM": 176,
+        "W": 162
+      }
+    },
+    "SC4021E0-PSG.edf": {
+      "n_epochs": 1025,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 94,
+        "N2": 545,
+        "N3": 95,
+        "REM": 163,
+        "W": 128
+      }
+    },
+    "SC4022E0-PSG.edf": {
+      "n_epochs": 1010,
+      "n_rejected": 4,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 3
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 3
+      },
+      "stage_counts": {
+        "N1": 184,
+        "N2": 402,
+        "N3": 119,
+        "REM": 179,
+        "W": 125
+      }
+    },
+    "SC4031E0-PSG.edf": {
+      "n_epochs": 952,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 61,
+        "N2": 485,
+        "N3": 57,
+        "REM": 209,
+        "W": 140
+      }
+    },
+    "SC4032E0-PSG.edf": {
+      "n_epochs": 911,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 45,
+        "N2": 400,
+        "N3": 131,
+        "REM": 199,
+        "W": 136
+      }
+    },
+    "SC4041E0-PSG.edf": {
+      "n_epochs": 1236,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 166,
+        "N2": 620,
+        "N3": 53,
+        "REM": 196,
+        "W": 200
+      }
+    },
+    "SC4042E0-PSG.edf": {
+      "n_epochs": 1204,
+      "n_rejected": 4,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 137,
+        "N2": 514,
+        "N3": 94,
+        "REM": 270,
+        "W": 185
+      }
+    },
+    "SC4051E0-PSG.edf": {
+      "n_epochs": 672,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 44,
+        "N2": 217,
+        "N3": 135,
+        "REM": 68,
+        "W": 208
+      }
+    },
+    "SC4052E0-PSG.edf": {
+      "n_epochs": 1248,
+      "n_rejected": 2,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 114,
+        "N2": 616,
+        "N3": 114,
+        "REM": 180,
+        "W": 222
+      }
+    },
+    "SC4061E0-PSG.edf": {
+      "n_epochs": 843,
+      "n_rejected": 38,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 38
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 38
+      },
+      "stage_counts": {
+        "N1": 56,
+        "N2": 407,
+        "N3": 136,
+        "REM": 102,
+        "W": 142
+      }
+    },
+    "SC4062E0-PSG.edf": {
+      "n_epochs": 1016,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 90,
+        "N2": 417,
+        "N3": 129,
+        "REM": 187,
+        "W": 193
+      }
+    },
+    "SC4071E0-PSG.edf": {
+      "n_epochs": 976,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 89,
+        "N2": 403,
+        "N3": 162,
+        "REM": 198,
+        "W": 124
+      }
+    },
+    "SC4072E0-PSG.edf": {
+      "n_epochs": 1273,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 84,
+        "N2": 392,
+        "N3": 222,
+        "REM": 168,
+        "W": 407
+      }
+    },
+    "SC4081E0-PSG.edf": {
+      "n_epochs": 1134,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 68,
+        "N2": 262,
+        "N3": 350,
+        "REM": 131,
+        "W": 323
+      }
+    },
+    "SC4082E0-PSG.edf": {
+      "n_epochs": 1054,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 39,
+        "N2": 329,
+        "N3": 282,
+        "REM": 260,
+        "W": 144
+      }
+    },
+    "SC4091E0-PSG.edf": {
+      "n_epochs": 1143,
+      "n_rejected": 11,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 19,
+        "N2": 561,
+        "N3": 170,
+        "REM": 232,
+        "W": 150
+      }
+    },
+    "SC4092E0-PSG.edf": {
+      "n_epochs": 1116,
+      "n_rejected": 12,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 81,
+        "N2": 512,
+        "N3": 107,
+        "REM": 265,
+        "W": 139
+      }
+    },
+    "SC4101E0-PSG.edf": {
+      "n_epochs": 1105,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 65,
+        "N2": 671,
+        "N3": 6,
+        "REM": 207,
+        "W": 155
+      }
+    },
+    "SC4102E0-PSG.edf": {
+      "n_epochs": 1093,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 117,
+        "N2": 607,
+        "N3": 25,
+        "REM": 199,
+        "W": 144
+      }
+    },
+    "SC4111E0-PSG.edf": {
+      "n_epochs": 929,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 13,
+        "N2": 502,
+        "N3": 129,
+        "REM": 158,
+        "W": 126
+      }
+    },
+    "SC4112E0-PSG.edf": {
+      "n_epochs": 802,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 18,
+        "N2": 396,
+        "N3": 111,
+        "REM": 151,
+        "W": 126
+      }
+    },
+    "SC4121E0-PSG.edf": {
+      "n_epochs": 1052,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 48,
+        "N2": 463,
+        "N3": 107,
+        "REM": 258,
+        "W": 176
+      }
+    },
+    "SC4122E0-PSG.edf": {
+      "n_epochs": 977,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 121,
+        "N2": 287,
+        "N3": 80,
+        "REM": 199,
+        "W": 290
+      }
+    },
+    "SC4131E0-PSG.edf": {
+      "n_epochs": 1028,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 57,
+        "N2": 497,
+        "N3": 147,
+        "REM": 172,
+        "W": 155
+      }
+    },
+    "SC4141E0-PSG.edf": {
+      "n_epochs": 1004,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 29,
+        "N2": 404,
+        "N3": 151,
+        "REM": 233,
+        "W": 187
+      }
+    },
+    "SC4142E0-PSG.edf": {
+      "n_epochs": 952,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 27,
+        "N2": 386,
+        "N3": 145,
+        "REM": 213,
+        "W": 181
+      }
+    },
+    "SC4151E0-PSG.edf": {
+      "n_epochs": 956,
+      "n_rejected": 4,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 41,
+        "N2": 354,
+        "N3": 177,
+        "REM": 208,
+        "W": 172
+      }
+    },
+    "SC4152E0-PSG.edf": {
+      "n_epochs": 1767,
+      "n_rejected": 5,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 47,
+        "N2": 438,
+        "N3": 178,
+        "REM": 292,
+        "W": 807
+      }
+    },
+    "SC4161E0-PSG.edf": {
+      "n_epochs": 1149,
+      "n_rejected": 9,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 4
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 4
+      },
+      "stage_counts": {
+        "N1": 55,
+        "N2": 448,
+        "N3": 165,
+        "REM": 260,
+        "W": 216
+      }
+    },
+    "SC4162E0-PSG.edf": {
+      "n_epochs": 1005,
+      "n_rejected": 2,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 42,
+        "N2": 459,
+        "N3": 128,
+        "REM": 195,
+        "W": 179
+      }
+    },
+    "SC4171E0-PSG.edf": {
+      "n_epochs": 1003,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 21,
+        "N2": 328,
+        "N3": 215,
+        "REM": 262,
+        "W": 176
+      }
+    },
+    "SC4172E0-PSG.edf": {
+      "n_epochs": 1777,
+      "n_rejected": 4,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 44,
+        "N2": 687,
+        "N3": 188,
+        "REM": 165,
+        "W": 689
+      }
+    },
+    "SC4181E0-PSG.edf": {
+      "n_epochs": 964,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 29,
+        "N2": 388,
+        "N3": 291,
+        "REM": 118,
+        "W": 138
+      }
+    },
+    "SC4182E0-PSG.edf": {
+      "n_epochs": 920,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 151,
+        "N2": 290,
+        "N3": 216,
+        "REM": 116,
+        "W": 147
+      }
+    },
+    "SC4191E0-PSG.edf": {
+      "n_epochs": 1535,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 118,
+        "N2": 833,
+        "N3": 110,
+        "REM": 286,
+        "W": 188
+      }
+    },
+    "SC4192E0-PSG.edf": {
+      "n_epochs": 1279,
+      "n_rejected": 5,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 72,
+        "N2": 434,
+        "N3": 60,
+        "REM": 332,
+        "W": 376
+      }
+    },
+    "SC4201E0-PSG.edf": {
+      "n_epochs": 1023,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 39,
+        "N2": 539,
+        "N3": 4,
+        "REM": 177,
+        "W": 263
+      }
+    },
+    "SC4202E0-PSG.edf": {
+      "n_epochs": 1021,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 120,
+        "N2": 479,
+        "N3": 0,
+        "REM": 207,
+        "W": 215
+      }
+    },
+    "SC4211E0-PSG.edf": {
+      "n_epochs": 1583,
+      "n_rejected": 6,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 1
+      },
+      "stage_counts": {
+        "N1": 106,
+        "N2": 527,
+        "N3": 49,
+        "REM": 151,
+        "W": 745
+      }
+    },
+    "SC4212E0-PSG.edf": {
+      "n_epochs": 808,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 87,
+        "N2": 402,
+        "N3": 43,
+        "REM": 87,
+        "W": 189
+      }
+    },
+    "SC4221E0-PSG.edf": {
+      "n_epochs": 1099,
+      "n_rejected": 11,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 11
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 10
+      },
+      "stage_counts": {
+        "N1": 221,
+        "N2": 461,
+        "N3": 62,
+        "REM": 182,
+        "W": 173
+      }
+    },
+    "SC4222E0-PSG.edf": {
+      "n_epochs": 1108,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 90,
+        "N2": 497,
+        "N3": 134,
+        "REM": 220,
+        "W": 167
+      }
+    },
+    "SC4231E0-PSG.edf": {
+      "n_epochs": 907,
+      "n_rejected": 3,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 139,
+        "N2": 414,
+        "N3": 12,
+        "REM": 212,
+        "W": 127
+      }
+    },
+    "SC4232E0-PSG.edf": {
+      "n_epochs": 1734,
+      "n_rejected": 5,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 382,
+        "N2": 213,
+        "N3": 1,
+        "REM": 217,
+        "W": 916
+      }
+    },
+    "SC4241E0-PSG.edf": {
+      "n_epochs": 1675,
+      "n_rejected": 3,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 1
+      },
+      "stage_counts": {
+        "N1": 85,
+        "N2": 514,
+        "N3": 44,
+        "REM": 184,
+        "W": 846
+      }
+    },
+    "SC4242E0-PSG.edf": {
+      "n_epochs": 1775,
+      "n_rejected": 126,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 126
+      },
+      "rejected_by_stage": {
+        "N1": 2,
+        "N2": 0,
+        "N3": 0,
+        "REM": 6,
+        "W": 118
+      },
+      "stage_counts": {
+        "N1": 94,
+        "N2": 556,
+        "N3": 5,
+        "REM": 176,
+        "W": 944
+      }
+    },
+    "SC4251E0-PSG.edf": {
+      "n_epochs": 972,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 102,
+        "N2": 569,
+        "N3": 22,
+        "REM": 146,
+        "W": 133
+      }
+    },
+    "SC4252E0-PSG.edf": {
+      "n_epochs": 1021,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 113,
+        "N2": 425,
+        "N3": 98,
+        "REM": 174,
+        "W": 210
+      }
+    },
+    "SC4261F0-PSG.edf": {
+      "n_epochs": 1597,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 245,
+        "N2": 405,
+        "N3": 94,
+        "REM": 226,
+        "W": 627
+      }
+    },
+    "SC4262F0-PSG.edf": {
+      "n_epochs": 980,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 77,
+        "N2": 464,
+        "N3": 79,
+        "REM": 193,
+        "W": 167
+      }
+    },
+    "SC4271F0-PSG.edf": {
+      "n_epochs": 1052,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 72,
+        "N2": 475,
+        "N3": 163,
+        "REM": 174,
+        "W": 168
+      }
+    },
+    "SC4272F0-PSG.edf": {
+      "n_epochs": 1090,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 87,
+        "N2": 379,
+        "N3": 178,
+        "REM": 223,
+        "W": 223
+      }
+    },
+    "SC4281G0-PSG.edf": {
+      "n_epochs": 1127,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 76,
+        "N2": 530,
+        "N3": 159,
+        "REM": 169,
+        "W": 193
+      }
+    },
+    "SC4282G0-PSG.edf": {
+      "n_epochs": 1070,
+      "n_rejected": 1,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 1
+      },
+      "stage_counts": {
+        "N1": 81,
+        "N2": 474,
+        "N3": 145,
+        "REM": 166,
+        "W": 204
+      }
+    },
+    "SC4291G0-PSG.edf": {
+      "n_epochs": 1131,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 181,
+        "N2": 427,
+        "N3": 104,
+        "REM": 175,
+        "W": 244
+      }
+    },
+    "SC4292G0-PSG.edf": {
+      "n_epochs": 1608,
+      "n_rejected": 10,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 7
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 1,
+        "N3": 0,
+        "REM": 0,
+        "W": 6
+      },
+      "stage_counts": {
+        "N1": 49,
+        "N2": 457,
+        "N3": 146,
+        "REM": 220,
+        "W": 733
+      }
+    },
+    "SC4301E0-PSG.edf": {
+      "n_epochs": 931,
+      "n_rejected": 2,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 109,
+        "N2": 457,
+        "N3": 30,
+        "REM": 122,
+        "W": 211
+      }
+    },
+    "SC4302E0-PSG.edf": {
+      "n_epochs": 854,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 96,
+        "N2": 418,
+        "N3": 32,
+        "REM": 135,
+        "W": 173
+      }
+    },
+    "SC4311E0-PSG.edf": {
+      "n_epochs": 1054,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 79,
+        "N2": 362,
+        "N3": 113,
+        "REM": 142,
+        "W": 358
+      }
+    },
+    "SC4312E0-PSG.edf": {
+      "n_epochs": 1181,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 152,
+        "N2": 334,
+        "N3": 191,
+        "REM": 191,
+        "W": 313
+      }
+    },
+    "SC4321E0-PSG.edf": {
+      "n_epochs": 1561,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 204,
+        "N2": 424,
+        "N3": 0,
+        "REM": 286,
+        "W": 646
+      }
+    },
+    "SC4322E0-PSG.edf": {
+      "n_epochs": 1021,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 144,
+        "N2": 475,
+        "N3": 1,
+        "REM": 241,
+        "W": 160
+      }
+    },
+    "SC4331F0-PSG.edf": {
+      "n_epochs": 1889,
+      "n_rejected": 4,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 3
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 3
+      },
+      "stage_counts": {
+        "N1": 212,
+        "N2": 453,
+        "N3": 0,
+        "REM": 168,
+        "W": 1055
+      }
+    },
+    "SC4332F0-PSG.edf": {
+      "n_epochs": 1314,
+      "n_rejected": 2,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 91,
+        "N2": 648,
+        "N3": 0,
+        "REM": 138,
+        "W": 435
+      }
+    },
+    "SC4341F0-PSG.edf": {
+      "n_epochs": 1501,
+      "n_rejected": 15,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 15
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 15
+      },
+      "stage_counts": {
+        "N1": 150,
+        "N2": 561,
+        "N3": 0,
+        "REM": 172,
+        "W": 618
+      }
+    },
+    "SC4342F0-PSG.edf": {
+      "n_epochs": 1582,
+      "n_rejected": 13,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 13
+      },
+      "rejected_by_stage": {
+        "N1": 3,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 10
+      },
+      "stage_counts": {
+        "N1": 136,
+        "N2": 596,
+        "N3": 0,
+        "REM": 166,
+        "W": 684
+      }
+    },
+    "SC4351F0-PSG.edf": {
+      "n_epochs": 976,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 78,
+        "N2": 419,
+        "N3": 104,
+        "REM": 24,
+        "W": 351
+      }
+    },
+    "SC4352F0-PSG.edf": {
+      "n_epochs": 965,
+      "n_rejected": 2,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 66,
+        "N2": 498,
+        "N3": 105,
+        "REM": 72,
+        "W": 222
+      }
+    },
+    "SC4362F0-PSG.edf": {
+      "n_epochs": 824,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 53,
+        "N2": 499,
+        "N3": 48,
+        "REM": 68,
+        "W": 156
+      }
+    },
+    "SC4371F0-PSG.edf": {
+      "n_epochs": 918,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 234,
+        "N2": 484,
+        "N3": 11,
+        "REM": 45,
+        "W": 144
+      }
+    },
+    "SC4372F0-PSG.edf": {
+      "n_epochs": 1509,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 282,
+        "N2": 433,
+        "N3": 6,
+        "REM": 106,
+        "W": 682
+      }
+    },
+    "SC4381F0-PSG.edf": {
+      "n_epochs": 1776,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 95,
+        "N2": 612,
+        "N3": 16,
+        "REM": 160,
+        "W": 893
+      }
+    },
+    "SC4382F0-PSG.edf": {
+      "n_epochs": 1871,
+      "n_rejected": 1,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 1
+      },
+      "stage_counts": {
+        "N1": 103,
+        "N2": 583,
+        "N3": 37,
+        "REM": 169,
+        "W": 979
+      }
+    },
+    "SC4401E0-PSG.edf": {
+      "n_epochs": 1064,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 163,
+        "N2": 377,
+        "N3": 4,
+        "REM": 110,
+        "W": 410
+      }
+    },
+    "SC4402E0-PSG.edf": {
+      "n_epochs": 1072,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 92,
+        "N2": 375,
+        "N3": 142,
+        "REM": 254,
+        "W": 209
+      }
+    },
+    "SC4411E0-PSG.edf": {
+      "n_epochs": 1078,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 145,
+        "N2": 502,
+        "N3": 46,
+        "REM": 204,
+        "W": 181
+      }
+    },
+    "SC4412E0-PSG.edf": {
+      "n_epochs": 924,
+      "n_rejected": 1,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 64,
+        "N2": 356,
+        "N3": 226,
+        "REM": 100,
+        "W": 178
+      }
+    },
+    "SC4421E0-PSG.edf": {
+      "n_epochs": 785,
+      "n_rejected": 1,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 1
+      },
+      "stage_counts": {
+        "N1": 34,
+        "N2": 283,
+        "N3": 163,
+        "REM": 158,
+        "W": 147
+      }
+    },
+    "SC4422E0-PSG.edf": {
+      "n_epochs": 884,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 159,
+        "N2": 298,
+        "N3": 124,
+        "REM": 88,
+        "W": 215
+      }
+    },
+    "SC4431E0-PSG.edf": {
+      "n_epochs": 699,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 63,
+        "N2": 331,
+        "N3": 82,
+        "REM": 81,
+        "W": 142
+      }
+    },
+    "SC4432E0-PSG.edf": {
+      "n_epochs": 962,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 41,
+        "N2": 430,
+        "N3": 144,
+        "REM": 197,
+        "W": 150
+      }
+    },
+    "SC4441E0-PSG.edf": {
+      "n_epochs": 1195,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 183,
+        "N2": 405,
+        "N3": 91,
+        "REM": 100,
+        "W": 416
+      }
+    },
+    "SC4442E0-PSG.edf": {
+      "n_epochs": 1092,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 92,
+        "N2": 530,
+        "N3": 92,
+        "REM": 96,
+        "W": 282
+      }
+    },
+    "SC4451F0-PSG.edf": {
+      "n_epochs": 1208,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 235,
+        "N2": 258,
+        "N3": 307,
+        "REM": 139,
+        "W": 269
+      }
+    },
+    "SC4452F0-PSG.edf": {
+      "n_epochs": 1166,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 162,
+        "N2": 358,
+        "N3": 267,
+        "REM": 188,
+        "W": 191
+      }
+    },
+    "SC4461F0-PSG.edf": {
+      "n_epochs": 984,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 118,
+        "N2": 484,
+        "N3": 9,
+        "REM": 176,
+        "W": 196
+      }
+    },
+    "SC4462F0-PSG.edf": {
+      "n_epochs": 1024,
+      "n_rejected": 2,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 198,
+        "N2": 472,
+        "N3": 19,
+        "REM": 186,
+        "W": 147
+      }
+    },
+    "SC4471F0-PSG.edf": {
+      "n_epochs": 1188,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 78,
+        "N2": 349,
+        "N3": 275,
+        "REM": 120,
+        "W": 365
+      }
+    },
+    "SC4472F0-PSG.edf": {
+      "n_epochs": 2162,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 161,
+        "N2": 299,
+        "N3": 144,
+        "REM": 120,
+        "W": 1437
+      }
+    },
+    "SC4481F0-PSG.edf": {
+      "n_epochs": 2027,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 299,
+        "N2": 471,
+        "N3": 95,
+        "REM": 236,
+        "W": 926
+      }
+    },
+    "SC4482F0-PSG.edf": {
+      "n_epochs": 1910,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 146,
+        "N2": 520,
+        "N3": 116,
+        "REM": 160,
+        "W": 968
+      }
+    },
+    "SC4491G0-PSG.edf": {
+      "n_epochs": 1101,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 149,
+        "N2": 512,
+        "N3": 14,
+        "REM": 216,
+        "W": 210
+      }
+    },
+    "SC4492G0-PSG.edf": {
+      "n_epochs": 1041,
+      "n_rejected": 3,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 2
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 2
+      },
+      "stage_counts": {
+        "N1": 157,
+        "N2": 416,
+        "N3": 27,
+        "REM": 133,
+        "W": 307
+      }
+    },
+    "SC4501E0-PSG.edf": {
+      "n_epochs": 1326,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 190,
+        "N2": 402,
+        "N3": 2,
+        "REM": 193,
+        "W": 539
+      }
+    },
+    "SC4502E0-PSG.edf": {
+      "n_epochs": 1103,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 78,
+        "N2": 493,
+        "N3": 42,
+        "REM": 191,
+        "W": 299
+      }
+    },
+    "SC4511E0-PSG.edf": {
+      "n_epochs": 1087,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 409,
+        "N2": 398,
+        "N3": 3,
+        "REM": 126,
+        "W": 151
+      }
+    },
+    "SC4512E0-PSG.edf": {
+      "n_epochs": 954,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 179,
+        "N2": 435,
+        "N3": 2,
+        "REM": 112,
+        "W": 226
+      }
+    },
+    "SC4522E0-PSG.edf": {
+      "n_epochs": 997,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 89,
+        "N2": 530,
+        "N3": 11,
+        "REM": 84,
+        "W": 283
+      }
+    },
+    "SC4531E0-PSG.edf": {
+      "n_epochs": 1096,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 124,
+        "N2": 465,
+        "N3": 85,
+        "REM": 180,
+        "W": 242
+      }
+    },
+    "SC4532E0-PSG.edf": {
+      "n_epochs": 1056,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 147,
+        "N2": 543,
+        "N3": 21,
+        "REM": 170,
+        "W": 175
+      }
+    },
+    "SC4541F0-PSG.edf": {
+      "n_epochs": 1717,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 199,
+        "N2": 557,
+        "N3": 5,
+        "REM": 135,
+        "W": 820
+      }
+    },
+    "SC4542F0-PSG.edf": {
+      "n_epochs": 1148,
+      "n_rejected": 3,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 3
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 3,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 208,
+        "N2": 461,
+        "N3": 78,
+        "REM": 120,
+        "W": 281
+      }
+    },
+    "SC4551F0-PSG.edf": {
+      "n_epochs": 1047,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 91,
+        "N2": 487,
+        "N3": 48,
+        "REM": 107,
+        "W": 314
+      }
+    },
+    "SC4552F0-PSG.edf": {
+      "n_epochs": 1090,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 115,
+        "N2": 395,
+        "N3": 1,
+        "REM": 245,
+        "W": 334
+      }
+    },
+    "SC4561F0-PSG.edf": {
+      "n_epochs": 1239,
+      "n_rejected": 2,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 521,
+        "N2": 272,
+        "N3": 50,
+        "REM": 113,
+        "W": 281
+      }
+    },
+    "SC4562F0-PSG.edf": {
+      "n_epochs": 1148,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 365,
+        "N2": 335,
+        "N3": 28,
+        "REM": 137,
+        "W": 283
+      }
+    },
+    "SC4571F0-PSG.edf": {
+      "n_epochs": 1236,
+      "n_rejected": 9,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 186,
+        "N2": 513,
+        "N3": 0,
+        "REM": 250,
+        "W": 278
+      }
+    },
+    "SC4572F0-PSG.edf": {
+      "n_epochs": 1102,
+      "n_rejected": 7,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 104,
+        "N2": 569,
+        "N3": 29,
+        "REM": 218,
+        "W": 175
+      }
+    },
+    "SC4581G0-PSG.edf": {
+      "n_epochs": 1095,
+      "n_rejected": 9,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 9
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 1,
+        "N3": 0,
+        "REM": 0,
+        "W": 8
+      },
+      "stage_counts": {
+        "N1": 152,
+        "N2": 578,
+        "N3": 10,
+        "REM": 161,
+        "W": 194
+      }
+    },
+    "SC4582G0-PSG.edf": {
+      "n_epochs": 1175,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 195,
+        "N2": 543,
+        "N3": 6,
+        "REM": 86,
+        "W": 345
+      }
+    },
+    "SC4591G0-PSG.edf": {
+      "n_epochs": 1841,
+      "n_rejected": 4,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 3
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 3
+      },
+      "stage_counts": {
+        "N1": 199,
+        "N2": 363,
+        "N3": 157,
+        "REM": 258,
+        "W": 863
+      }
+    },
+    "SC4592G0-PSG.edf": {
+      "n_epochs": 1231,
+      "n_rejected": 5,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 5
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 1,
+        "N3": 0,
+        "REM": 0,
+        "W": 4
+      },
+      "stage_counts": {
+        "N1": 194,
+        "N2": 277,
+        "N3": 101,
+        "REM": 155,
+        "W": 504
+      }
+    },
+    "SC4601E0-PSG.edf": {
+      "n_epochs": 1349,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 38,
+        "N2": 252,
+        "N3": 288,
+        "REM": 170,
+        "W": 601
+      }
+    },
+    "SC4602E0-PSG.edf": {
+      "n_epochs": 2043,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 223,
+        "N2": 264,
+        "N3": 196,
+        "REM": 249,
+        "W": 1111
+      }
+    },
+    "SC4611E0-PSG.edf": {
+      "n_epochs": 1658,
+      "n_rejected": 6,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 123,
+        "N2": 276,
+        "N3": 139,
+        "REM": 399,
+        "W": 715
+      }
+    },
+    "SC4612E0-PSG.edf": {
+      "n_epochs": 1062,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 96,
+        "N2": 479,
+        "N3": 65,
+        "REM": 214,
+        "W": 208
+      }
+    },
+    "SC4621E0-PSG.edf": {
+      "n_epochs": 1445,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 276,
+        "N2": 745,
+        "N3": 14,
+        "REM": 78,
+        "W": 332
+      }
+    },
+    "SC4622E0-PSG.edf": {
+      "n_epochs": 1823,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 347,
+        "N2": 431,
+        "N3": 4,
+        "REM": 115,
+        "W": 926
+      }
+    },
+    "SC4631E0-PSG.edf": {
+      "n_epochs": 1063,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 131,
+        "N2": 481,
+        "N3": 39,
+        "REM": 120,
+        "W": 292
+      }
+    },
+    "SC4632E0-PSG.edf": {
+      "n_epochs": 1107,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 157,
+        "N2": 558,
+        "N3": 28,
+        "REM": 140,
+        "W": 224
+      }
+    },
+    "SC4641E0-PSG.edf": {
+      "n_epochs": 1271,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 179,
+        "N2": 382,
+        "N3": 0,
+        "REM": 78,
+        "W": 632
+      }
+    },
+    "SC4642E0-PSG.edf": {
+      "n_epochs": 2049,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 243,
+        "N2": 518,
+        "N3": 0,
+        "REM": 127,
+        "W": 1161
+      }
+    },
+    "SC4651E0-PSG.edf": {
+      "n_epochs": 2644,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 100,
+        "N2": 821,
+        "N3": 140,
+        "REM": 159,
+        "W": 1424
+      }
+    },
+    "SC4652E0-PSG.edf": {
+      "n_epochs": 1931,
+      "n_rejected": 2,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 204,
+        "N2": 463,
+        "N3": 186,
+        "REM": 211,
+        "W": 865
+      }
+    },
+    "SC4661E0-PSG.edf": {
+      "n_epochs": 2027,
+      "n_rejected": 7,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 6
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 6
+      },
+      "stage_counts": {
+        "N1": 375,
+        "N2": 422,
+        "N3": 40,
+        "REM": 110,
+        "W": 1079
+      }
+    },
+    "SC4662E0-PSG.edf": {
+      "n_epochs": 1994,
+      "n_rejected": 2,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 2
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 2
+      },
+      "stage_counts": {
+        "N1": 235,
+        "N2": 414,
+        "N3": 78,
+        "REM": 250,
+        "W": 1017
+      }
+    },
+    "SC4671G0-PSG.edf": {
+      "n_epochs": 1968,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 356,
+        "N2": 507,
+        "N3": 17,
+        "REM": 149,
+        "W": 939
+      }
+    },
+    "SC4672G0-PSG.edf": {
+      "n_epochs": 1021,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 213,
+        "N2": 339,
+        "N3": 29,
+        "REM": 95,
+        "W": 345
+      }
+    },
+    "SC4701E0-PSG.edf": {
+      "n_epochs": 1718,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 143,
+        "N2": 698,
+        "N3": 35,
+        "REM": 105,
+        "W": 736
+      }
+    },
+    "SC4702E0-PSG.edf": {
+      "n_epochs": 1515,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 233,
+        "N2": 444,
+        "N3": 33,
+        "REM": 98,
+        "W": 707
+      }
+    },
+    "SC4711E0-PSG.edf": {
+      "n_epochs": 1413,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 234,
+        "N2": 605,
+        "N3": 4,
+        "REM": 118,
+        "W": 452
+      }
+    },
+    "SC4712E0-PSG.edf": {
+      "n_epochs": 1241,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 230,
+        "N2": 446,
+        "N3": 0,
+        "REM": 135,
+        "W": 430
+      }
+    },
+    "SC4721E0-PSG.edf": {
+      "n_epochs": 1031,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 259,
+        "N2": 341,
+        "N3": 0,
+        "REM": 174,
+        "W": 257
+      }
+    },
+    "SC4722E0-PSG.edf": {
+      "n_epochs": 1130,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 240,
+        "N2": 444,
+        "N3": 0,
+        "REM": 136,
+        "W": 310
+      }
+    },
+    "SC4731E0-PSG.edf": {
+      "n_epochs": 2667,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 222,
+        "N2": 470,
+        "N3": 0,
+        "REM": 135,
+        "W": 1840
+      }
+    },
+    "SC4732E0-PSG.edf": {
+      "n_epochs": 2319,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 470,
+        "N2": 363,
+        "N3": 0,
+        "REM": 136,
+        "W": 1349
+      }
+    },
+    "SC4741E0-PSG.edf": {
+      "n_epochs": 2211,
+      "n_rejected": 1,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 158,
+        "N2": 610,
+        "N3": 0,
+        "REM": 213,
+        "W": 1229
+      }
+    },
+    "SC4742E0-PSG.edf": {
+      "n_epochs": 1063,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 207,
+        "N2": 340,
+        "N3": 0,
+        "REM": 208,
+        "W": 308
+      }
+    },
+    "SC4751E0-PSG.edf": {
+      "n_epochs": 2044,
+      "n_rejected": 1,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 1
+      },
+      "stage_counts": {
+        "N1": 102,
+        "N2": 467,
+        "N3": 0,
+        "REM": 47,
+        "W": 1428
+      }
+    },
+    "SC4752E0-PSG.edf": {
+      "n_epochs": 1049,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 143,
+        "N2": 436,
+        "N3": 20,
+        "REM": 72,
+        "W": 378
+      }
+    },
+    "SC4761E0-PSG.edf": {
+      "n_epochs": 1703,
+      "n_rejected": 20,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 127,
+        "N2": 425,
+        "N3": 27,
+        "REM": 35,
+        "W": 1069
+      }
+    },
+    "SC4762E0-PSG.edf": {
+      "n_epochs": 2810,
+      "n_rejected": 148,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 161,
+        "N2": 268,
+        "N3": 0,
+        "REM": 394,
+        "W": 1839
+      }
+    },
+    "SC4771G0-PSG.edf": {
+      "n_epochs": 1325,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 348,
+        "N2": 461,
+        "N3": 5,
+        "REM": 109,
+        "W": 402
+      }
+    },
+    "SC4772G0-PSG.edf": {
+      "n_epochs": 1324,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 111,
+        "N2": 240,
+        "N3": 87,
+        "REM": 133,
+        "W": 753
+      }
+    },
+    "SC4801G0-PSG.edf": {
+      "n_epochs": 1241,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 203,
+        "N2": 595,
+        "N3": 13,
+        "REM": 142,
+        "W": 288
+      }
+    },
+    "SC4802G0-PSG.edf": {
+      "n_epochs": 1229,
+      "n_rejected": 31,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 31
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 1,
+        "N3": 0,
+        "REM": 4,
+        "W": 26
+      },
+      "stage_counts": {
+        "N1": 204,
+        "N2": 541,
+        "N3": 6,
+        "REM": 136,
+        "W": 342
+      }
+    },
+    "SC4811G0-PSG.edf": {
+      "n_epochs": 1293,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 88,
+        "N2": 528,
+        "N3": 121,
+        "REM": 196,
+        "W": 360
+      }
+    },
+    "SC4812G0-PSG.edf": {
+      "n_epochs": 1185,
+      "n_rejected": 4,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 1,
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 2
+      },
+      "stage_counts": {
+        "N1": 138,
+        "N2": 347,
+        "N3": 102,
+        "REM": 138,
+        "W": 458
+      }
+    },
+    "SC4821G0-PSG.edf": {
+      "n_epochs": 1705,
+      "n_rejected": 100,
+      "reasons": {
+        "eog:horizontal:peak_to_peak": 99
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 28,
+        "W": 71
+      },
+      "stage_counts": {
+        "N1": 66,
+        "N2": 407,
+        "N3": 162,
+        "REM": 228,
+        "W": 841
+      }
+    },
+    "SC4822G0-PSG.edf": {
+      "n_epochs": 1366,
+      "n_rejected": 0,
+      "reasons": {},
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 0
+      },
+      "stage_counts": {
+        "N1": 121,
+        "N2": 400,
+        "N3": 156,
+        "REM": 179,
+        "W": 510
+      }
+    },
+    "ST7011J0-PSG.edf": {
+      "n_epochs": 1092,
+      "n_rejected": 61,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 57,
+        "eeg:Pz-Oz:peak_to_peak": 9,
+        "eog:horizontal:peak_to_peak": 9
+      },
+      "rejected_by_stage": {
+        "N1": 8,
+        "N2": 10,
+        "N3": 1,
+        "REM": 2,
+        "W": 40
+      },
+      "stage_counts": {
+        "N1": 101,
+        "N2": 529,
+        "N3": 136,
+        "REM": 122,
+        "W": 204
+      }
+    },
+    "ST7012J0-PSG.edf": {
+      "n_epochs": 1040,
+      "n_rejected": 12,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 12,
+        "eeg:Pz-Oz:peak_to_peak": 1,
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 12
+      },
+      "stage_counts": {
+        "N1": 62,
+        "N2": 586,
+        "N3": 109,
+        "REM": 180,
+        "W": 103
+      }
+    },
+    "ST7021J0-PSG.edf": {
+      "n_epochs": 920,
+      "n_rejected": 23,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 4,
+        "eeg:Pz-Oz:peak_to_peak": 16,
+        "eog:horizontal:peak_to_peak": 6
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 3,
+        "N3": 2,
+        "REM": 1,
+        "W": 16
+      },
+      "stage_counts": {
+        "N1": 44,
+        "N2": 412,
+        "N3": 219,
+        "REM": 176,
+        "W": 69
+      }
+    },
+    "ST7022J0-PSG.edf": {
+      "n_epochs": 944,
+      "n_rejected": 41,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 8,
+        "eeg:Pz-Oz:peak_to_peak": 29,
+        "eog:horizontal:peak_to_peak": 15
+      },
+      "rejected_by_stage": {
+        "N1": 4,
+        "N2": 6,
+        "N3": 2,
+        "REM": 3,
+        "W": 26
+      },
+      "stage_counts": {
+        "N1": 74,
+        "N2": 353,
+        "N3": 284,
+        "REM": 159,
+        "W": 74
+      }
+    },
+    "ST7041J0-PSG.edf": {
+      "n_epochs": 1008,
+      "n_rejected": 181,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 23,
+        "eeg:Pz-Oz:peak_to_peak": 170,
+        "eog:horizontal:peak_to_peak": 12
+      },
+      "rejected_by_stage": {
+        "N1": 17,
+        "N2": 102,
+        "N3": 4,
+        "REM": 18,
+        "W": 39
+      },
+      "stage_counts": {
+        "N1": 66,
+        "N2": 536,
+        "N3": 132,
+        "REM": 218,
+        "W": 55
+      }
+    },
+    "ST7042J0-PSG.edf": {
+      "n_epochs": 1108,
+      "n_rejected": 53,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 45,
+        "eeg:Pz-Oz:peak_to_peak": 10,
+        "eog:horizontal:peak_to_peak": 41
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 0,
+        "N3": 0,
+        "REM": 2,
+        "W": 49
+      },
+      "stage_counts": {
+        "N1": 60,
+        "N2": 622,
+        "N3": 122,
+        "REM": 216,
+        "W": 87
+      }
+    },
+    "ST7051J0-PSG.edf": {
+      "n_epochs": 1018,
+      "n_rejected": 37,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 9,
+        "eog:horizontal:peak_to_peak": 37
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 1,
+        "N3": 0,
+        "REM": 14,
+        "W": 22
+      },
+      "stage_counts": {
+        "N1": 103,
+        "N2": 368,
+        "N3": 248,
+        "REM": 225,
+        "W": 74
+      }
+    },
+    "ST7052J0-PSG.edf": {
+      "n_epochs": 1034,
+      "n_rejected": 72,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 10,
+        "eeg:Pz-Oz:peak_to_peak": 5,
+        "eog:horizontal:peak_to_peak": 69
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 1,
+        "REM": 54,
+        "W": 17
+      },
+      "stage_counts": {
+        "N1": 121,
+        "N2": 396,
+        "N3": 180,
+        "REM": 226,
+        "W": 111
+      }
+    },
+    "ST7061J0-PSG.edf": {
+      "n_epochs": 1008,
+      "n_rejected": 80,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 20,
+        "eeg:Pz-Oz:peak_to_peak": 72,
+        "eog:horizontal:peak_to_peak": 2
+      },
+      "rejected_by_stage": {
+        "N1": 13,
+        "N2": 22,
+        "N3": 0,
+        "REM": 21,
+        "W": 24
+      },
+      "stage_counts": {
+        "N1": 89,
+        "N2": 589,
+        "N3": 10,
+        "REM": 271,
+        "W": 49
+      }
+    },
+    "ST7062J0-PSG.edf": {
+      "n_epochs": 952,
+      "n_rejected": 60,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 14,
+        "eeg:Pz-Oz:peak_to_peak": 34,
+        "eog:horizontal:peak_to_peak": 38
+      },
+      "rejected_by_stage": {
+        "N1": 11,
+        "N2": 12,
+        "N3": 0,
+        "REM": 16,
+        "W": 21
+      },
+      "stage_counts": {
+        "N1": 47,
+        "N2": 581,
+        "N3": 26,
+        "REM": 246,
+        "W": 52
+      }
+    },
+    "ST7071J0-PSG.edf": {
+      "n_epochs": 821,
+      "n_rejected": 41,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 18,
+        "eeg:Pz-Oz:peak_to_peak": 5,
+        "eog:horizontal:peak_to_peak": 29
+      },
+      "rejected_by_stage": {
+        "N1": 2,
+        "N2": 0,
+        "N3": 0,
+        "REM": 1,
+        "W": 38
+      },
+      "stage_counts": {
+        "N1": 88,
+        "N2": 201,
+        "N3": 132,
+        "REM": 68,
+        "W": 332
+      }
+    },
+    "ST7072J0-PSG.edf": {
+      "n_epochs": 803,
+      "n_rejected": 10,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 5,
+        "eeg:Pz-Oz:peak_to_peak": 4,
+        "eog:horizontal:peak_to_peak": 5
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 1,
+        "N3": 0,
+        "REM": 1,
+        "W": 8
+      },
+      "stage_counts": {
+        "N1": 57,
+        "N2": 345,
+        "N3": 160,
+        "REM": 112,
+        "W": 129
+      }
+    },
+    "ST7081J0-PSG.edf": {
+      "n_epochs": 947,
+      "n_rejected": 15,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 2,
+        "eeg:Pz-Oz:peak_to_peak": 1,
+        "eog:horizontal:peak_to_peak": 13
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 14
+      },
+      "stage_counts": {
+        "N1": 79,
+        "N2": 468,
+        "N3": 168,
+        "REM": 88,
+        "W": 144
+      }
+    },
+    "ST7082J0-PSG.edf": {
+      "n_epochs": 931,
+      "n_rejected": 31,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 7,
+        "eeg:Pz-Oz:peak_to_peak": 7,
+        "eog:horizontal:peak_to_peak": 27
+      },
+      "rejected_by_stage": {
+        "N1": 3,
+        "N2": 0,
+        "N3": 0,
+        "REM": 4,
+        "W": 24
+      },
+      "stage_counts": {
+        "N1": 171,
+        "N2": 450,
+        "N3": 45,
+        "REM": 111,
+        "W": 154
+      }
+    },
+    "ST7091J0-PSG.edf": {
+      "n_epochs": 943,
+      "n_rejected": 3,
+      "reasons": {
+        "eeg:Pz-Oz:peak_to_peak": 2,
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 3
+      },
+      "stage_counts": {
+        "N1": 91,
+        "N2": 464,
+        "N3": 62,
+        "REM": 186,
+        "W": 140
+      }
+    },
+    "ST7092J0-PSG.edf": {
+      "n_epochs": 923,
+      "n_rejected": 35,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 18,
+        "eeg:Pz-Oz:peak_to_peak": 5,
+        "eog:horizontal:peak_to_peak": 22
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 34
+      },
+      "stage_counts": {
+        "N1": 153,
+        "N2": 354,
+        "N3": 56,
+        "REM": 160,
+        "W": 200
+      }
+    },
+    "ST7101J0-PSG.edf": {
+      "n_epochs": 1049,
+      "n_rejected": 28,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 18,
+        "eeg:Pz-Oz:peak_to_peak": 7,
+        "eog:horizontal:peak_to_peak": 5
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 1,
+        "N3": 11,
+        "REM": 3,
+        "W": 5
+      },
+      "stage_counts": {
+        "N1": 72,
+        "N2": 303,
+        "N3": 305,
+        "REM": 231,
+        "W": 131
+      }
+    },
+    "ST7102J0-PSG.edf": {
+      "n_epochs": 986,
+      "n_rejected": 22,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 15,
+        "eeg:Pz-Oz:peak_to_peak": 10,
+        "eog:horizontal:peak_to_peak": 8
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 3,
+        "N3": 6,
+        "REM": 1,
+        "W": 5
+      },
+      "stage_counts": {
+        "N1": 30,
+        "N2": 258,
+        "N3": 294,
+        "REM": 343,
+        "W": 55
+      }
+    },
+    "ST7111J0-PSG.edf": {
+      "n_epochs": 1023,
+      "n_rejected": 37,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 12,
+        "eeg:Pz-Oz:peak_to_peak": 4,
+        "eog:horizontal:peak_to_peak": 21
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 9,
+        "REM": 1,
+        "W": 21
+      },
+      "stage_counts": {
+        "N1": 25,
+        "N2": 408,
+        "N3": 224,
+        "REM": 315,
+        "W": 45
+      }
+    },
+    "ST7112J0-PSG.edf": {
+      "n_epochs": 986,
+      "n_rejected": 44,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 4,
+        "eeg:Pz-Oz:peak_to_peak": 13,
+        "eog:horizontal:peak_to_peak": 32
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 1,
+        "N3": 2,
+        "REM": 10,
+        "W": 23
+      },
+      "stage_counts": {
+        "N1": 37,
+        "N2": 388,
+        "N3": 211,
+        "REM": 293,
+        "W": 49
+      }
+    },
+    "ST7121J0-PSG.edf": {
+      "n_epochs": 1035,
+      "n_rejected": 31,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 7,
+        "eeg:Pz-Oz:peak_to_peak": 9,
+        "eog:horizontal:peak_to_peak": 14
+      },
+      "rejected_by_stage": {
+        "N1": 2,
+        "N2": 1,
+        "N3": 2,
+        "REM": 1,
+        "W": 16
+      },
+      "stage_counts": {
+        "N1": 34,
+        "N2": 452,
+        "N3": 203,
+        "REM": 267,
+        "W": 70
+      }
+    },
+    "ST7122J0-PSG.edf": {
+      "n_epochs": 969,
+      "n_rejected": 70,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 35,
+        "eeg:Pz-Oz:peak_to_peak": 22,
+        "eog:horizontal:peak_to_peak": 29
+      },
+      "rejected_by_stage": {
+        "N1": 3,
+        "N2": 9,
+        "N3": 0,
+        "REM": 7,
+        "W": 27
+      },
+      "stage_counts": {
+        "N1": 73,
+        "N2": 480,
+        "N3": 158,
+        "REM": 144,
+        "W": 90
+      }
+    },
+    "ST7131J0-PSG.edf": {
+      "n_epochs": 859,
+      "n_rejected": 6,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 4,
+        "eeg:Pz-Oz:peak_to_peak": 2
+      },
+      "rejected_by_stage": {
+        "N1": 2,
+        "N2": 2,
+        "N3": 0,
+        "REM": 0,
+        "W": 2
+      },
+      "stage_counts": {
+        "N1": 60,
+        "N2": 470,
+        "N3": 149,
+        "REM": 162,
+        "W": 18
+      }
+    },
+    "ST7132J0-PSG.edf": {
+      "n_epochs": 852,
+      "n_rejected": 43,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 12,
+        "eeg:Pz-Oz:peak_to_peak": 11,
+        "eog:horizontal:peak_to_peak": 30
+      },
+      "rejected_by_stage": {
+        "N1": 15,
+        "N2": 7,
+        "N3": 1,
+        "REM": 10,
+        "W": 10
+      },
+      "stage_counts": {
+        "N1": 89,
+        "N2": 384,
+        "N3": 103,
+        "REM": 216,
+        "W": 60
+      }
+    },
+    "ST7141J0-PSG.edf": {
+      "n_epochs": 862,
+      "n_rejected": 25,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 2,
+        "eeg:Pz-Oz:peak_to_peak": 1,
+        "eog:horizontal:peak_to_peak": 23
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 4,
+        "N3": 2,
+        "REM": 5,
+        "W": 9
+      },
+      "stage_counts": {
+        "N1": 78,
+        "N2": 364,
+        "N3": 165,
+        "REM": 208,
+        "W": 43
+      }
+    },
+    "ST7142J0-PSG.edf": {
+      "n_epochs": 882,
+      "n_rejected": 36,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 3,
+        "eeg:Pz-Oz:peak_to_peak": 9,
+        "eog:horizontal:peak_to_peak": 24
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 7,
+        "N3": 3,
+        "REM": 2,
+        "W": 14
+      },
+      "stage_counts": {
+        "N1": 31,
+        "N2": 401,
+        "N3": 157,
+        "REM": 249,
+        "W": 35
+      }
+    },
+    "ST7151J0-PSG.edf": {
+      "n_epochs": 897,
+      "n_rejected": 15,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 2,
+        "eeg:Pz-Oz:peak_to_peak": 6,
+        "eog:horizontal:peak_to_peak": 10
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 5,
+        "W": 10
+      },
+      "stage_counts": {
+        "N1": 78,
+        "N2": 304,
+        "N3": 268,
+        "REM": 143,
+        "W": 104
+      }
+    },
+    "ST7152J0-PSG.edf": {
+      "n_epochs": 1045,
+      "n_rejected": 15,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 3,
+        "eeg:Pz-Oz:peak_to_peak": 3,
+        "eog:horizontal:peak_to_peak": 15
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 10,
+        "W": 5
+      },
+      "stage_counts": {
+        "N1": 81,
+        "N2": 447,
+        "N3": 261,
+        "REM": 200,
+        "W": 56
+      }
+    },
+    "ST7161J0-PSG.edf": {
+      "n_epochs": 1050,
+      "n_rejected": 13,
+      "reasons": {
+        "eeg:Pz-Oz:peak_to_peak": 12,
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 2,
+        "N2": 0,
+        "N3": 0,
+        "REM": 1,
+        "W": 10
+      },
+      "stage_counts": {
+        "N1": 92,
+        "N2": 445,
+        "N3": 204,
+        "REM": 192,
+        "W": 117
+      }
+    },
+    "ST7162J0-PSG.edf": {
+      "n_epochs": 988,
+      "n_rejected": 14,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 2,
+        "eeg:Pz-Oz:peak_to_peak": 8,
+        "eog:horizontal:peak_to_peak": 6
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 2,
+        "N3": 2,
+        "REM": 2,
+        "W": 7
+      },
+      "stage_counts": {
+        "N1": 102,
+        "N2": 430,
+        "N3": 218,
+        "REM": 80,
+        "W": 158
+      }
+    },
+    "ST7171J0-PSG.edf": {
+      "n_epochs": 918,
+      "n_rejected": 6,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 6,
+        "eeg:Pz-Oz:peak_to_peak": 3,
+        "eog:horizontal:peak_to_peak": 3
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 6
+      },
+      "stage_counts": {
+        "N1": 140,
+        "N2": 294,
+        "N3": 176,
+        "REM": 129,
+        "W": 179
+      }
+    },
+    "ST7172J0-PSG.edf": {
+      "n_epochs": 1005,
+      "n_rejected": 16,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 11,
+        "eeg:Pz-Oz:peak_to_peak": 10,
+        "eog:horizontal:peak_to_peak": 4
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 1,
+        "N3": 0,
+        "REM": 0,
+        "W": 14
+      },
+      "stage_counts": {
+        "N1": 180,
+        "N2": 382,
+        "N3": 155,
+        "REM": 148,
+        "W": 140
+      }
+    },
+    "ST7181J0-PSG.edf": {
+      "n_epochs": 959,
+      "n_rejected": 1,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 1,
+        "eeg:Pz-Oz:peak_to_peak": 1,
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 1
+      },
+      "stage_counts": {
+        "N1": 119,
+        "N2": 569,
+        "N3": 27,
+        "REM": 136,
+        "W": 108
+      }
+    },
+    "ST7182J0-PSG.edf": {
+      "n_epochs": 967,
+      "n_rejected": 2,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 1,
+        "eeg:Pz-Oz:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 2
+      },
+      "stage_counts": {
+        "N1": 73,
+        "N2": 525,
+        "N3": 72,
+        "REM": 251,
+        "W": 46
+      }
+    },
+    "ST7191J0-PSG.edf": {
+      "n_epochs": 955,
+      "n_rejected": 11,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 8,
+        "eeg:Pz-Oz:peak_to_peak": 3,
+        "eog:horizontal:peak_to_peak": 8
+      },
+      "rejected_by_stage": {
+        "N1": 2,
+        "N2": 1,
+        "N3": 0,
+        "REM": 0,
+        "W": 8
+      },
+      "stage_counts": {
+        "N1": 68,
+        "N2": 423,
+        "N3": 193,
+        "REM": 200,
+        "W": 71
+      }
+    },
+    "ST7192J0-PSG.edf": {
+      "n_epochs": 931,
+      "n_rejected": 15,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 5,
+        "eeg:Pz-Oz:peak_to_peak": 2,
+        "eog:horizontal:peak_to_peak": 10
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 1,
+        "N3": 0,
+        "REM": 6,
+        "W": 7
+      },
+      "stage_counts": {
+        "N1": 21,
+        "N2": 545,
+        "N3": 112,
+        "REM": 232,
+        "W": 21
+      }
+    },
+    "ST7201J0-PSG.edf": {
+      "n_epochs": 923,
+      "n_rejected": 6,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 4,
+        "eeg:Pz-Oz:peak_to_peak": 1,
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 3
+      },
+      "stage_counts": {
+        "N1": 69,
+        "N2": 610,
+        "N3": 92,
+        "REM": 134,
+        "W": 16
+      }
+    },
+    "ST7202J0-PSG.edf": {
+      "n_epochs": 900,
+      "n_rejected": 14,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 3,
+        "eeg:Pz-Oz:peak_to_peak": 1,
+        "eog:horizontal:peak_to_peak": 8
+      },
+      "rejected_by_stage": {
+        "N1": 2,
+        "N2": 0,
+        "N3": 0,
+        "REM": 3,
+        "W": 7
+      },
+      "stage_counts": {
+        "N1": 34,
+        "N2": 625,
+        "N3": 44,
+        "REM": 174,
+        "W": 21
+      }
+    },
+    "ST7211J0-PSG.edf": {
+      "n_epochs": 1063,
+      "n_rejected": 29,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 27,
+        "eeg:Pz-Oz:peak_to_peak": 3,
+        "eog:horizontal:peak_to_peak": 15
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 29
+      },
+      "stage_counts": {
+        "N1": 60,
+        "N2": 538,
+        "N3": 151,
+        "REM": 156,
+        "W": 158
+      }
+    },
+    "ST7212J0-PSG.edf": {
+      "n_epochs": 1010,
+      "n_rejected": 51,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 25,
+        "eeg:Pz-Oz:peak_to_peak": 32,
+        "eog:horizontal:peak_to_peak": 30
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 2,
+        "N3": 0,
+        "REM": 2,
+        "W": 46
+      },
+      "stage_counts": {
+        "N1": 135,
+        "N2": 378,
+        "N3": 198,
+        "REM": 144,
+        "W": 155
+      }
+    },
+    "ST7221J0-PSG.edf": {
+      "n_epochs": 1029,
+      "n_rejected": 8,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 7,
+        "eeg:Pz-Oz:peak_to_peak": 3,
+        "eog:horizontal:peak_to_peak": 2
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 0,
+        "N3": 0,
+        "REM": 0,
+        "W": 8
+      },
+      "stage_counts": {
+        "N1": 211,
+        "N2": 438,
+        "N3": 2,
+        "REM": 231,
+        "W": 147
+      }
+    },
+    "ST7222J0-PSG.edf": {
+      "n_epochs": 951,
+      "n_rejected": 4,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 3,
+        "eeg:Pz-Oz:peak_to_peak": 2,
+        "eog:horizontal:peak_to_peak": 1
+      },
+      "rejected_by_stage": {
+        "N1": 0,
+        "N2": 1,
+        "N3": 0,
+        "REM": 1,
+        "W": 2
+      },
+      "stage_counts": {
+        "N1": 191,
+        "N2": 475,
+        "N3": 0,
+        "REM": 200,
+        "W": 85
+      }
+    },
+    "ST7241J0-PSG.edf": {
+      "n_epochs": 1024,
+      "n_rejected": 38,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 8,
+        "eeg:Pz-Oz:peak_to_peak": 13,
+        "eog:horizontal:peak_to_peak": 23
+      },
+      "rejected_by_stage": {
+        "N1": 4,
+        "N2": 3,
+        "N3": 1,
+        "REM": 22,
+        "W": 5
+      },
+      "stage_counts": {
+        "N1": 42,
+        "N2": 670,
+        "N3": 45,
+        "REM": 237,
+        "W": 27
+      }
+    },
+    "ST7242J0-PSG.edf": {
+      "n_epochs": 940,
+      "n_rejected": 47,
+      "reasons": {
+        "eeg:Fpz-Cz:peak_to_peak": 4,
+        "eeg:Pz-Oz:peak_to_peak": 11,
+        "eog:horizontal:peak_to_peak": 37
+      },
+      "rejected_by_stage": {
+        "N1": 1,
+        "N2": 2,
+        "N3": 0,
+        "REM": 32,
+        "W": 11
+      },
+      "stage_counts": {
+        "N1": 22,
+        "N2": 591,
+        "N3": 139,
+        "REM": 170,
+        "W": 17
+      }
+    }
+  },
+  "overall": {
+    "epochs_before": 238317,
+    "kept": 236227,
+    "rejected": 2090
+  },
+  "pre_counts": {
+    "N1": 25175,
+    "N2": 88983,
+    "N3": 19454,
+    "REM": 34184,
+    "W": 70140
+  },
+  "reason_counts": {
+    "eeg:Fpz-Cz:peak_to_peak": 485,
+    "eeg:Pz-Oz:peak_to_peak": 573,
+    "eog:horizontal:peak_to_peak": 1077
+  },
+  "rej_counts": {
+    "N1": 111,
+    "N2": 209,
+    "N3": 49,
+    "REM": 302,
+    "W": 1038
+  }
+}

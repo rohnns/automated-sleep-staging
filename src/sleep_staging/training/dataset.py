@@ -10,7 +10,7 @@ import torch
 from numpy.typing import NDArray
 from torch.utils.data import Dataset
 
-from sleep_staging.encodings.types import EncodedDataset, EncodedDatasetCollection
+from sleep_staging.representations.types import EncodedDataset, EncodedDatasetCollection
 from sleep_staging.training.split import SubjectSplit
 
 

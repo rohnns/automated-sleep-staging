@@ -1,0 +1,5 @@
+Skipping notch freq(s) >= Nyquist (50.0 Hz): [50.0]
+Skipping notch freq(s) >= Nyquist (50.0 Hz): [50.0]
+Skipping notch freq(s) >= Nyquist (50.0 Hz): [50.0]
+Skipping notch freq(s) >= Nyquist (50.0 Hz): [50.0]
+Skipping notch freq(s) >= Nyquist (50.0 Hz): [50.0]

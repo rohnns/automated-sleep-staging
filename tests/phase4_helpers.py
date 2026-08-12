@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from sleep_staging.encodings.types import EncodedDataset, EncodedDatasetCollection, RepresentationMetadata
+from sleep_staging.representations.types import EncodedDataset, EncodedDatasetCollection, RepresentationMetadata
 
 
 def make_collection(

@@ -13,10 +13,12 @@ authors = [{ name = "Sleep Staging Pipeline Contributors" }]
 keywords = ["eeg", "sleep-staging", "mne", "pytorch", "clinical"]
 dependencies = [
     "mne>=1.6",
+    "matplotlib>=3.8",
     "numpy>=1.26",
     "pyyaml>=6.0",
     "scikit-learn>=1.4",
     "scipy>=1.11",
+    "streamlit>=1.56",
     "torch>=2.2",
 ]
 

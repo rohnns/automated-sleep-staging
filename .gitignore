@@ -20,8 +20,18 @@ env/
 data/raw/
 data/processed/
 
-# Offline analysis artifacts
+# Offline analysis artifacts (legacy location)
 analysis/outputs/
+
+# Generated outputs
+outputs/checkpoints/
+outputs/predictions/
+outputs/reports/
+outputs/figures/
+
+# Keep phase4 outputs tracked (they're committed artifacts)
+!outputs/phase4_outputs/
+!outputs/phase4_final_report.md
 
 # Editors / OS
 .idea/

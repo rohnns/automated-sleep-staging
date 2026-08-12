@@ -6,7 +6,9 @@ import mne
 import numpy as np
 import pytest
 
-from sleep_staging.config import PreprocessingSettings, WakeCropSettings
+from pathlib import Path
+
+from sleep_staging.config import PreprocessingSettings, WakeCropSettings, load_settings
 from sleep_staging.preprocessing import (
     AnnotationUnroller,
     ChannelSelector,
@@ -185,7 +187,7 @@ def test_default_pipeline_end_to_end() -> None:
     result = build_default_pipeline(settings).run(recording, preload=True)
     assert result.epoch_labels is not None
     assert set(result.epoch_labels.labels) <= {"W", "N1", "N2", "N3", "REM", "IGNORE"}
-    assert result.channel_names == ("Fpz-Cz", "Pz-Oz", "horizontal", "submental")
+    assert result.channel_names == ("Fpz-Cz", "Pz-Oz", "horizontal")
     assert result.boundaries is not None
     assert result.boundaries.has_scored_sleep
     # Filter must precede wake crop so edge transients land in discarded wake.
@@ -206,3 +208,102 @@ def test_default_pipeline_rejects_drop_policy() -> None:
     )
     with pytest.raises(ValueError, match="refuses"):
         build_default_pipeline(settings)
+
+
+def test_default_pipeline_uses_channel_specific_filter_bands() -> None:
+    project_root = Path(__file__).resolve().parents[2]
+    settings = load_settings(project_root / "configs" / "default.yaml")
+
+    annot = mne.Annotations(
+        onset=[0.0, 180.0, 360.0],
+        duration=[180.0, 180.0, 240.0],
+        description=["Sleep stage W", "Sleep stage 2", "Sleep stage W"],
+    )
+    recording = make_sleep_recording(
+        duration_sec=600.0,
+        annotations=annot,
+        ch_names=["Fpz-Cz", "Pz-Oz", "horizontal", "submental"],
+        ch_types=["eeg", "eeg", "eog", "emg"],
+    )
+
+    result = build_default_pipeline(settings.preprocessing).run(recording, preload=True)
+    per_channel = result.extras["filter"]["per_channel"]
+
+    assert per_channel["Fpz-Cz"]["mne_type"] == "eeg"
+    assert per_channel["Fpz-Cz"]["l_freq"] == 0.5
+    assert per_channel["Fpz-Cz"]["h_freq"] == 30.0
+
+    assert per_channel["Pz-Oz"]["mne_type"] == "eeg"
+    assert per_channel["Pz-Oz"]["l_freq"] == 0.5
+    assert per_channel["Pz-Oz"]["h_freq"] == 30.0
+
+    assert per_channel["horizontal"]["mne_type"] == "eog"
+    assert per_channel["horizontal"]["l_freq"] == 0.5
+    assert per_channel["horizontal"]["h_freq"] == 15.0
+
+
+def test_default_pipeline_reference_original_skips_transform() -> None:
+    """Default config keeps reference.mode=original and omits ReferenceTransform."""
+    project_root = Path(__file__).resolve().parents[2]
+    settings = load_settings(project_root / "configs" / "default.yaml")
+    assert settings.preprocessing.reference.mode == "original"
+
+    pipeline = build_default_pipeline(settings.preprocessing)
+    assert "reference_transform" not in [t.name for t in pipeline.transforms]
+
+    annot = mne.Annotations(
+        onset=[0.0, 180.0, 360.0],
+        duration=[180.0, 180.0, 240.0],
+        description=["Sleep stage W", "Sleep stage 2", "Sleep stage W"],
+    )
+    recording = make_sleep_recording(
+        duration_sec=600.0,
+        annotations=annot,
+        ch_names=["Fpz-Cz", "Pz-Oz", "horizontal"],
+        ch_types=["eeg", "eeg", "eog"],
+    )
+    result = pipeline.run(recording, preload=True)
+    assert "reference_transform" not in result.applied_transforms
+    assert "reference" not in result.extras
+
+
+def test_default_pipeline_reference_common_average_via_settings() -> None:
+    """Opt-in CAR is wired through build_default_pipeline from settings."""
+    from dataclasses import replace
+
+    from sleep_staging.config.settings import ReferenceSettings
+
+    project_root = Path(__file__).resolve().parents[2]
+    base = load_settings(project_root / "configs" / "default.yaml").preprocessing
+    assert base.reference.mode == "original"
+
+    settings = replace(base, reference=ReferenceSettings(mode="common_average"))
+    pipeline = build_default_pipeline(settings)
+    names = [t.name for t in pipeline.transforms]
+    assert "reference_transform" in names
+    assert names.index("reference_transform") < names.index("signal_filter")
+    assert names.index("bad_channel_detector") < names.index("reference_transform")
+
+    annot = mne.Annotations(
+        onset=[0.0, 180.0, 360.0],
+        duration=[180.0, 180.0, 240.0],
+        description=["Sleep stage W", "Sleep stage 2", "Sleep stage W"],
+    )
+    recording = make_sleep_recording(
+        duration_sec=600.0,
+        annotations=annot,
+        ch_names=["Fpz-Cz", "Pz-Oz", "horizontal"],
+        ch_types=["eeg", "eeg", "eog"],
+    )
+    result = pipeline.run(recording, preload=True)
+    assert "reference_transform" in result.applied_transforms
+    assert result.extras["reference"]["method"] == "common_average"
+    assert set(result.extras["reference"]["applied_channels"]) == {"Fpz-Cz", "Pz-Oz"}
+    assert result.channel_names == ("Fpz-Cz", "Pz-Oz", "horizontal")
+
+
+def test_default_channel_names_export_excludes_emg() -> None:
+    from sleep_staging.preprocessing import DEFAULT_CHANNEL_NAMES
+
+    assert DEFAULT_CHANNEL_NAMES == ("Fpz-Cz", "Pz-Oz", "horizontal")
+    assert "submental" not in DEFAULT_CHANNEL_NAMES

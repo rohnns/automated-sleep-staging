@@ -1,0 +1,205 @@
+{
+  "algorithm": "welch",
+  "band_names": [
+    "delta",
+    "theta",
+    "alpha",
+    "sigma",
+    "beta"
+  ],
+  "bandpower_settings": {
+    "bands": [
+      [
+        "delta",
+        0.5,
+        4.0
+      ],
+      [
+        "theta",
+        4.0,
+        8.0
+      ],
+      [
+        "alpha",
+        8.0,
+        12.0
+      ],
+      [
+        "sigma",
+        12.0,
+        16.0
+      ],
+      [
+        "beta",
+        16.0,
+        30.0
+      ]
+    ],
+    "eps": 1e-10,
+    "expected_sfreq": 100.0,
+    "include_log_absolute": true,
+    "include_ratios": false,
+    "include_relative": true,
+    "method": "welch",
+    "ratios": [],
+    "welch": {
+      "average": "median",
+      "detrend": "constant",
+      "nfft": 400,
+      "noverlap": 200,
+      "nperseg": 400,
+      "scaling": "density",
+      "window": "hamming"
+    }
+  },
+  "bands_hz": [
+    [
+      "delta",
+      0.5,
+      4.0
+    ],
+    [
+      "theta",
+      4.0,
+      8.0
+    ],
+    [
+      "alpha",
+      8.0,
+      12.0
+    ],
+    [
+      "sigma",
+      12.0,
+      16.0
+    ],
+    [
+      "beta",
+      16.0,
+      30.0
+    ]
+  ],
+  "cache_data_file": "62__1.npz",
+  "cache_format_version": 1,
+  "cache_metadata_file": "62__1.json",
+  "channel_names": [
+    "Fpz-Cz",
+    "Pz-Oz",
+    "horizontal"
+  ],
+  "encoder_config_fingerprint": "8fef50f0651372b203f6d17619aca7cce4b8d84b3fa34f15a58898c2b9a73af9",
+  "encoding_method": "bandpower",
+  "epoch_duration_sec": 30.0,
+  "eps": 1e-10,
+  "expected_sfreq": 100.0,
+  "feature_names": [
+    "log_delta",
+    "log_theta",
+    "log_alpha",
+    "log_sigma",
+    "log_beta",
+    "rel_delta",
+    "rel_theta",
+    "rel_alpha",
+    "rel_sigma",
+    "rel_beta"
+  ],
+  "feature_shape": [
+    3,
+    10
+  ],
+  "include_log_absolute": true,
+  "include_ratios": false,
+  "include_relative": true,
+  "package_version": "0.1.0",
+  "preprocessing": {
+    "amplitude_reject": {
+      "eeg_peak_to_peak": 0.0005,
+      "emg_peak_to_peak": 0.001,
+      "enabled": true,
+      "eog_peak_to_peak": 0.001
+    },
+    "bad_channel": {
+      "eeg_high_std_threshold": 0.01,
+      "eeg_peak_to_peak_threshold": 0.001,
+      "emg_high_std_threshold": 0.0005,
+      "emg_peak_to_peak_threshold": 0.005,
+      "enabled": true,
+      "eog_high_std_threshold": 0.0002,
+      "eog_peak_to_peak_threshold": 0.003,
+      "flat_std_threshold": 1e-08,
+      "mark_mne_bads": true,
+      "nan_frac_threshold": 0.01,
+      "saturation_frac_threshold": 0.99
+    },
+    "channels": {
+      "include_emg": false,
+      "names": [
+        "Fpz-Cz",
+        "Pz-Oz",
+        "horizontal"
+      ],
+      "require_all_names": true,
+      "types": null
+    },
+    "epoch_duration_sec": 30.0,
+    "filter": {
+      "eeg_h_freq": 30.0,
+      "eeg_l_freq": 0.5,
+      "emg_h_freq": 30.0,
+      "emg_l_freq": 10.0,
+      "enabled": true,
+      "eog_h_freq": 15.0,
+      "eog_l_freq": 0.5,
+      "h_freq": 30.0,
+      "l_freq": 0.5,
+      "notch_freqs": [
+        50.0
+      ]
+    },
+    "ica": {
+      "detect_eog": true,
+      "enabled": true,
+      "eog_measure": "correlation",
+      "eog_threshold": 0.8,
+      "max_iter": 500,
+      "method": "fastica",
+      "n_components": null,
+      "random_state": 42
+    },
+    "min_remainder_sec": 30.0,
+    "normalize": {
+      "enabled": true,
+      "eps": 1e-08,
+      "method": "zscore"
+    },
+    "reference": {
+      "mode": "original"
+    },
+    "stage_map": {
+      "ignore_label": "IGNORE",
+      "unmapped_policy": "ignore"
+    },
+    "wake_crop": {
+      "buffer_sec": 1800.0,
+      "enabled": true,
+      "require_sleep": true
+    }
+  },
+  "recording_id": "1",
+  "representation": "bandpower",
+  "saved_at": "cache-only",
+  "sfreq": 100.0,
+  "source_hypnogram": "D:\\SleepEDFX\\sleep-cassette\\SC4621E0-Hypnogram.edf",
+  "source_psg": "D:\\SleepEDFX\\sleep-cassette\\SC4621E0-PSG.edf",
+  "subject_id": "62",
+  "welch": {
+    "average": "median",
+    "detrend": "constant",
+    "nfft": 400,
+    "noverlap": 200,
+    "nperseg": 400,
+    "scaling": "density",
+    "window": "hamming"
+  }
+}

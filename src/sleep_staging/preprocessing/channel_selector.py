@@ -1,8 +1,9 @@
 """Configuration-driven channel selection.
 
 Dataset evidence: Sleep-EDF Expanded cassette recordings commonly expose
-``Fpz-Cz``, ``Pz-Oz`` (EEG), ``horizontal`` (EOG), ``submental`` (EMG), plus
-respiration / rectal temperature / stim that are usually dropped for staging.
+``Fpz-Cz``, ``Pz-Oz`` (EEG), ``horizontal`` (EOG), and optional
+``submental`` (EMG), plus respiration / rectal temperature / stim that are
+usually dropped for staging.
 Telemetry recordings omit some extras. Selection is therefore config-driven by
 channel name (preferred) and/or MNE channel type.
 """
@@ -20,7 +21,6 @@ DEFAULT_CHANNEL_NAMES: tuple[str, ...] = (
     "Fpz-Cz",
     "Pz-Oz",
     "horizontal",
-    "submental",
 )
 
 
@@ -30,12 +30,17 @@ class ChannelSelector(Transform):
     Parameters
     ----------
     names:
-        Exact channel names to keep (order preserved).
+        Exact channel names to keep (order preserved). If omitted, defaults to the
+        standard staging list (EEG + EOG, optionally EMG) provided by the
+        configuration.
     types:
         MNE channel types to keep when ``names`` is empty/None.
     require_all_names:
         If true, missing requested names raise ``MissingChannelsError``.
         If false, keep the intersection.
+    include_emg:
+        When ``names`` is None, controls whether the default staging set
+        includes the submental EMG channel.
     """
 
     name = "channel_selector"
@@ -43,10 +48,18 @@ class ChannelSelector(Transform):
     def __init__(
         self,
         *,
-        names: list[str] | tuple[str, ...] | None = DEFAULT_CHANNEL_NAMES,
+        names: list[str] | tuple[str, ...] | None = None,
         types: list[str] | tuple[str, ...] | None = None,
         require_all_names: bool = True,
+        include_emg: bool = False,
     ) -> None:
+        # Only construct default names when the caller did not provide names or types
+        if names is None and types is None:
+            names_list = ["Fpz-Cz", "Pz-Oz", "horizontal"]
+            if include_emg:
+                names_list.append("submental")
+            names = tuple(names_list)
+
         self.names = tuple(names) if names is not None else None
         self.types = tuple(types) if types is not None else None
         self.require_all_names = require_all_names
