@@ -24,7 +24,8 @@ from sleep_staging.preprocessing.pipeline import preprocess_recording
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "default.yaml"
-OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "phase4_outputs"
+PRIMARY_OUTPUT_ROOT = PROJECT_ROOT / "artifacts" / "predictions" / "sc_to_st"
+LEGACY_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "phase4_outputs"
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,19 +38,20 @@ class ArtifactSet:
 @st.cache_data(show_spinner=False)
 def _load_artifact_sets() -> list[ArtifactSet]:
     items: list[ArtifactSet] = []
-    if not OUTPUT_ROOT.exists():
-        return items
-    for folder in sorted(p for p in OUTPUT_ROOT.iterdir() if p.is_dir()):
-        manifest = folder / "manifest.json"
-        if not manifest.exists():
+    for root in (PRIMARY_OUTPUT_ROOT, LEGACY_OUTPUT_ROOT):
+        if not root.exists():
             continue
-        try:
-            data = json.loads(manifest.read_text(encoding="utf-8"))
-            psg = Path(data["selected_psg"])
-            subj = str(data.get("selected_subject") or parse_psg_filename(psg).subject_id)
-            items.append(ArtifactSet(folder.name, psg, subj))
-        except Exception:
-            continue
+        for folder in sorted(p for p in root.iterdir() if p.is_dir()):
+            manifest = folder / "manifest.json"
+            if not manifest.exists():
+                continue
+            try:
+                data = json.loads(manifest.read_text(encoding="utf-8"))
+                psg = Path(data["selected_psg"])
+                subj = str(data.get("selected_subject") or parse_psg_filename(psg).subject_id)
+                items.append(ArtifactSet(folder.name, psg, subj))
+            except Exception:
+                continue
     return items
 
 
@@ -60,7 +62,9 @@ def _load_settings_cached(config_path: str):
 
 @st.cache_data(show_spinner=False)
 def load_recording_artifacts(recording_key: str) -> dict[str, object]:
-    folder = OUTPUT_ROOT / recording_key
+    folder = PRIMARY_OUTPUT_ROOT / recording_key
+    if not folder.exists():
+        folder = LEGACY_OUTPUT_ROOT / recording_key
     out: dict[str, object] = {"recording_key": recording_key}
     for rep in ("raw", "bandpower", "time_frequency"):
         rep_dir = folder / rep

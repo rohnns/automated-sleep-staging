@@ -145,14 +145,14 @@ encodings:
 experiment:
   split:
     cohort: SC
-    channels: [Fpz-Cz]
+    channels: [Fpz-Cz, Pz-Oz, horizontal]
     seed: 42
     train_ratio: 0.70
     val_ratio: 0.15
     test_ratio: 0.15
   train:
     seed: 42
-    batch_size: 32
+    batch_size: 64
     max_epochs: 20
     learning_rate: 0.001
     weight_decay: 0.0
@@ -164,7 +164,7 @@ experiment:
     early_stopping_patience: 5
     checkpoint_dir: outputs/checkpoints/phase4a
   model:
-    in_channels: 1
+    in_channels: 3
     n_classes: 5
     n_band_features: 10
   classical_baseline:

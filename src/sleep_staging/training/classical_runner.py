@@ -54,8 +54,12 @@ def _cache_stem(recording_id: str, subject_id: str) -> str:
     return f"{subject_id}__{recording_id}"
 
 
-def _cache_paths(recording_id: str, subject_id: str) -> tuple[Path, Path]:
-    stem = _cache_stem(recording_id, subject_id)
+def _cache_stem_for_source(source_stem: str) -> str:
+    return source_stem
+
+
+def _cache_paths(recording_stem: str) -> tuple[Path, Path]:
+    stem = _cache_stem_for_source(recording_stem)
     return CACHE_ROOT / f"{stem}.npz", CACHE_ROOT / f"{stem}.json"
 
 
@@ -78,6 +82,8 @@ def _build_cache_metadata(
         "package_version": PACKAGE_VERSION,
         "representation": encoded.representation,
         "encoding_method": "bandpower",
+        "source_recording_stem": source_psg.stem,
+        "source_recording_name": source_psg.name,
         "subject_id": encoded.subject_id,
         "recording_id": encoded.recording_id,
         "source_psg": str(source_psg),
@@ -157,7 +163,8 @@ def _build_cache_metadata(
 
 def _save_cache(encoded: EncodedDataset, metadata: dict[str, object]) -> Path:
     CACHE_ROOT.mkdir(parents=True, exist_ok=True)
-    data_path, meta_path = _cache_paths(encoded.recording_id, encoded.subject_id)
+    source_stem = str(metadata.get("source_recording_stem") or encoded.recording_id)
+    data_path, meta_path = _cache_paths(source_stem)
     np.savez_compressed(
         data_path,
         features=np.asarray(encoded.features),
@@ -184,6 +191,10 @@ def _load_cache(data_path: Path, meta_path: Path, *, expected_fingerprint: str) 
     if meta.get("encoder_config_fingerprint") != expected_fingerprint:
         return None
     if meta.get("representation") != "bandpower":
+        return None
+    if meta.get("source_recording_stem") != data_path.stem:
+        return None
+    if meta.get("source_recording_name") != f"{data_path.stem}.edf":
         return None
     try:
         with np.load(data_path, allow_pickle=False) as npz:
@@ -247,9 +258,7 @@ def load_or_build_bandpower_cache(
     vocabulary: LabelVocabulary,
 ) -> tuple[EncodedDataset, CacheStatus]:
     ids = parse_psg_filename(psg_file)
-    recording_id = psg_file.stem
-    subject_id = f"{ids.study}{ids.series}{ids.subject_id}"
-    data_path, meta_path = _cache_paths(recording_id, subject_id)
+    data_path, meta_path = _cache_paths(psg_file.stem)
     expected_fingerprint = _fingerprint_metadata(
         {
             "package_version": PACKAGE_VERSION,
@@ -363,9 +372,7 @@ def run_classical_baseline() -> Path:
     cached = 0
     new = 0
     for idx, psg_file in enumerate(sc_files, 1):
-        ids = parse_psg_filename(psg_file)
-        subject_id = f"{ids.study}{ids.series}{ids.subject_id}"
-        data_path, meta_path = _cache_paths(psg_file.stem, subject_id)
+        data_path, meta_path = _cache_paths(psg_file.stem)
         if data_path.exists() and meta_path.exists():
             fingerprint = _fingerprint_metadata(
                 {
@@ -402,10 +409,10 @@ def run_classical_baseline() -> Path:
             if encoded is not None:
                 cached += 1
                 datasets.append(encoded)
-                print(f"[{idx}/{len(sc_files)}] {psg_file.name} (cached)")
+                print(f"[{idx}/{len(sc_files)}] CACHE HIT: {psg_file.stem}")
                 continue
 
-        print(f"[{idx}/{len(sc_files)}] {psg_file.name} (processing)")
+        print(f"[{idx}/{len(sc_files)}] PROCESS: {psg_file.stem}")
         encoded, _status = load_or_build_bandpower_cache(
             psg_file,
             settings=settings,
@@ -414,7 +421,7 @@ def run_classical_baseline() -> Path:
         )
         datasets.append(encoded)
         new += 1
-        print(f"[{idx}/{len(sc_files)}] {psg_file.name} (saved cache)")
+        print(f"[{idx}/{len(sc_files)}] CACHE WRITTEN: {psg_file.stem}")
 
     collection = EncodedDatasetCollection(tuple(datasets))
     split = _subject_split_for_bandpower(collection)

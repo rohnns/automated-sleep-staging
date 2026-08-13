@@ -44,6 +44,22 @@ def test_classical_cache_write_read_and_invalid_incompatible(tmp_path: Path, mon
     assert runner._load_cache(data_path, meta_path, expected_fingerprint=meta["encoder_config_fingerprint"]) is None
 
 
+def test_classical_cache_paths_are_unique_for_distinct_recording_stems(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(runner, "CACHE_ROOT", tmp_path / "cache")
+    psg_a = Path("SC4001E0-PSG.edf")
+    psg_b = Path("SC4001E1-PSG.edf")
+
+    data_a, meta_a = runner._cache_paths(psg_a.stem)
+    data_b, meta_b = runner._cache_paths(psg_b.stem)
+
+    assert data_a != data_b
+    assert meta_a != meta_b
+    assert data_a.name == "SC4001E0-PSG.npz"
+    assert meta_a.name == "SC4001E0-PSG.json"
+    assert data_b.name == "SC4001E1-PSG.npz"
+    assert meta_b.name == "SC4001E1-PSG.json"
+
+
 def test_classical_cache_resume_skips_reprocessing(tmp_path: Path, monkeypatch) -> None:
     settings = load_settings(Path("configs/default.yaml"))
     collection = make_collection("bandpower", subjects=("S1", "S2"), n_epochs=4)
