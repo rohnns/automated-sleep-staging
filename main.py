@@ -9,6 +9,17 @@ Usage examples:
 
 from __future__ import annotations
 
+import os
+
+# Must be set before the first CUDA call (i.e. before `torch` is imported by
+# anything below) -- mitigates CUDA allocator fragmentation on long training
+# loops (thousands of small/varying allocations), which is what caused
+# `torch.AcceleratorError: CUDA error: out of memory` deep into epoch 0 on
+# this machine's 6 GB laptop GPU despite the per-step model footprint being
+# tiny. Purely an allocator behavior change -- no effect on training math,
+# model architecture, or results.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
 import argparse
 import sys
 from pathlib import Path
@@ -16,6 +27,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from sleep_staging.common.logging_utils import configure_logging
 from sleep_staging.training.sc_to_st import run_primary_experiment, write_primary_inventory_report
 
 
@@ -32,6 +44,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> int:
+    configure_logging()
     args = _parse_args(argv)
     report = run_primary_experiment(
         config_path=args.config,

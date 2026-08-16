@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline Sleep-EDF Expanded dataset analysis for Phase 2 design.
+"""Offline Sleep-EDF Expanded dataset analysis for preprocessing design.
 
 This script is **not** part of the runtime pipeline. It loads recordings via
 the public ``sleep_staging.acquisition`` API and summarizes statistics that
@@ -478,7 +478,7 @@ def print_report(analysis: DatasetAnalysis) -> None:
     summary = summarize_dataset(analysis)
     print()
     print("=" * 72)
-    print("Sleep-EDF Expanded - offline dataset analysis (Phase 2 design)")
+    print("Sleep-EDF Expanded - offline dataset analysis (preprocessing design)")
     print("=" * 72)
     print(f"Data root     : {analysis.data_root}")
     print(f"PSG discovered: {analysis.n_psg_discovered}")
@@ -565,7 +565,7 @@ def print_report(analysis: DatasetAnalysis) -> None:
     _print_dist("wake during sleep period", sb["wake_during_sleep_sec"])
     print()
 
-    print("--- Design notes for Phase 2 ---")
+    print("--- Preprocessing design notes ---")
     for note in summary["design_notes"]:
         print(f"  - {note}")
     print()
@@ -575,7 +575,7 @@ def print_report(analysis: DatasetAnalysis) -> None:
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Offline Sleep-EDF dataset statistics for Phase 2 preprocessing design. "
+            "Offline Sleep-EDF dataset statistics for preprocessing design. "
             "Not part of the runtime pipeline."
         )
     )

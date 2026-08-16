@@ -25,6 +25,80 @@ cd sleep-staging-pipeline
 pip install -e ".[dev]"
 ```
 
+Dependencies are pinned in `pyproject.toml` to the exact versions the reported
+results were produced with. For GPU training, install the matching CUDA build of
+`torch==2.11.0` from the PyTorch index; the CPU wheel of the same version
+produces the same results, only slower.
+
+## Reproduce / demo
+
+Point the pipeline at your Sleep-EDF Expanded copy (no need to edit tracked
+config — the environment variable wins over `configs/default.yaml`):
+
+```bash
+set SLEEP_EDF_ROOT=D:/SleepEDFX
+```
+
+Then, in order:
+
+```bash
+pytest
+```
+
+```bash
+python main.py --model all
+```
+
+```bash
+streamlit run app.py
+```
+
+- `pytest` — full suite (178 tests). Tests needing the real corpus skip
+  automatically when it is absent, so the suite is green on a bare checkout.
+- `main.py` — the primary SC→ST experiment end to end: encode all 197
+  recordings (153 SC + 44 ST), train all four models, then write checkpoints to
+  `models/` and metrics / predictions / hypnograms to `artifacts/`. Per-recording
+  encodings are cached, so only the first run pays the full preprocessing cost.
+  Add `--model raw|bandpower|time_frequency|classical` to run a single model.
+- `app.py` — Streamlit dashboard over the artifacts produced above.
+
+Encoding cache location defaults to `D:/SleepStagingCache/sc_to_st` and is
+overridable with `SLEEP_CACHE_ROOT`. It is deliberately kept outside the repo:
+at full scale it is several GB per representation.
+
+## The experiment: SC → ST
+
+`SC` and `ST` are the two **Sleep-EDF Expanded** cohorts:
+
+| Cohort | Full name | Recordings | Population | Role here |
+|---|---|---|---|---|
+| **SC** | Sleep **C**assette | 153 | Healthy subjects, studied at home | Train + validation |
+| **ST** | Sleep **T**elemetry | 44 | Mild difficulty falling asleep, studied in hospital | External test |
+
+So **SC→ST** = *train on Sleep Cassette, test on Sleep Telemetry*. This is a
+deliberately harder protocol than a random split: the test cohort differs in
+both population and recording setting, so the score reflects genuine external
+generalization rather than memorized within-cohort quirks.
+
+Splitting is **subject-wise** (never recording-wise) and asserted leak-free:
+55 SC subjects train, 12 SC subjects validate (model selection + early
+stopping), and all 22 ST subjects are held out as a clean test set that is
+evaluated exactly once.
+
+## Where outputs go
+
+Two roots, with a deliberate rule:
+
+| Directory | Contents | Committed? |
+|---|---|---|
+| `artifacts/` | **Generated.** Written by `python main.py` — metrics, prediction CSVs, hypnograms. Safe to delete; rerun to rebuild. | No (gitignored) |
+| `models/` | **Generated.** Trained checkpoints + metadata per model. | No (gitignored) |
+| `outputs/` | **Authored.** Committed analysis: the representation-comparison report, amplitude-rejection QC, whole-night exports. | Yes |
+| `$SLEEP_CACHE_ROOT` | **Generated.** Per-recording encoding cache (several GB). Lives outside the repo by design. | No |
+
+Rule of thumb: `outputs/` is written by a human (or reviewed once and kept),
+`artifacts/` + `models/` are disposable build products of `main.py`.
+
 ## Configuration
 
 Paths and pipeline options live in `configs/default.yaml`. Relative paths are
@@ -33,7 +107,7 @@ resolved from the project root. Configuration is plain YAML → dataclasses
 
 ```yaml
 acquisition:
-  data_root: D:/SleepEDFX
+  data_root: D:/SleepEDFX    # or set SLEEP_EDF_ROOT
   preload: false
 
 preprocessing:
@@ -169,17 +243,20 @@ sleep-staging-pipeline/
 │   ├── config/                      # Central typed settings
 │   └── common/                      # Shared logging helpers
 ├── scripts/
-│   ├── experiments/                 # Full experiment runners
-│   ├── evaluation/                  # Checkpoint evaluation & export
-│   ├── utilities/                   # Dataset stats, class distribution, etc.
-│   └── smoke/                       # Smoke tests for pipeline stages
-├── tests/
-├── outputs/
-│   ├── checkpoints/                 # Trained model checkpoints
-│   ├── predictions/                 # Exported predictions
-│   ├── reports/                     # Generated reports
-│   ├── figures/                     # Generated figures
-│   └── phase4_outputs/              # Phase 4 exported artifacts
+│   ├── evaluation/                  # Whole-night artifact export
+│   ├── utilities/                   # Dataset stats, class distribution, QC
+│   └── run_classical_baseline.py    # Standalone classical baseline runner
+├── tests/                           # Full suite (pytest)
+├── models/                          # Trained checkpoints (main.py output)
+│   ├── raw_cnn/  bandpower_mlp/  stft_cnn/  classical/
+├── artifacts/                       # main.py outputs
+│   ├── reports/sc_to_st/            # inventory.json + per-model metrics
+│   ├── predictions/sc_to_st/        # Per-epoch prediction CSVs
+│   └── figures/sc_to_st/            # Hypnogram plots
+├── outputs/                         # Committed analysis reports
+│   ├── phase4_final_report.md       # Representation comparison writeup
+│   ├── qc_amplitude/                # Amplitude-rejection threshold QC
+│   └── phase4_outputs/              # Per-recording whole-night exports
 └── pyproject.toml
 ```
 

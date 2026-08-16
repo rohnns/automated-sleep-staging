@@ -12,7 +12,9 @@ def test_default_phase4_experiment_settings_load() -> None:
     settings = load_settings(project_root / "configs" / "default.yaml")
     exp = settings.experiment
     assert exp.split.cohort == "SC"
-    assert exp.split.channels == ("Fpz-Cz",)
+    # Primary SC→ST experiment uses the 3-channel staging montage
+    # (2 EEG derivations + 1 EOG), matching configs/default.yaml.
+    assert exp.split.channels == ("Fpz-Cz", "Pz-Oz", "horizontal")
     assert exp.split.ratios == (0.70, 0.15, 0.15)
     assert exp.train.class_weighting == "balanced"
     assert exp.train.early_stopping_patience == 5

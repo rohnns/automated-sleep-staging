@@ -1,4 +1,4 @@
-"""Minimal Phase 4a controlled experiment runner.
+"""Minimal controlled experiment runner.
 
 This module intentionally consumes already-encoded collections. Full Sleep-EDF
 preprocess/encode orchestration is left for a later script so tests and smoke

@@ -1,4 +1,4 @@
-"""Public API for Phase 4a training utilities."""
+"""Public API for training utilities."""
 
 from sleep_staging.training.dataset import (
     EpochDataset,

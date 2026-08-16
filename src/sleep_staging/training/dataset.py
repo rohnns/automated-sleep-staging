@@ -1,4 +1,4 @@
-"""Torch dataset over encoded epochs for Phase 4a."""
+"""Torch dataset over encoded epochs."""
 
 from __future__ import annotations
 
@@ -145,8 +145,12 @@ class EpochDataset(Dataset):
 
     def __getitem__(self, index: int) -> dict[str, Any]:
         example = self.examples[index]
+        # np.array(..., copy=True) materializes just this one epoch's slice
+        # (tens of KB) out of a possibly memory-mapped, read-only backing
+        # array (see sc_to_st_cache._load_features_memmapped), producing a
+        # normal writable array for torch instead of aliasing mmap pages.
         return {
-            "features": torch.as_tensor(example.features, dtype=self.dtype),
+            "features": torch.as_tensor(np.array(example.features), dtype=self.dtype),
             "label": torch.tensor(example.label, dtype=torch.long),
             "target": torch.tensor(example.label, dtype=torch.long),
             "subject_id": example.subject_id,

@@ -1,7 +1,13 @@
-"""Streamlit dashboard for Phase 4 outputs.
+"""Streamlit dashboard for exported sleep-staging results.
 
-This app is read-only: it uses the exported Phase 4 artifacts and the existing
-preprocessing helpers to visualize one held-out test recording at a time.
+This app is read-only: it reads the artifacts written by ``main.py`` (and the
+legacy whole-night exports) plus the existing preprocessing helpers, to
+visualize one held-out test recording at a time. It never trains or refits.
+
+Artifact roots, in priority order:
+
+``artifacts/predictions/sc_to_st/``  primary, written by ``main.py``
+``outputs/phase4_outputs/``          legacy per-recording whole-night exports
 """
 
 from __future__ import annotations
@@ -26,6 +32,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "default.yaml"
 PRIMARY_OUTPUT_ROOT = PROJECT_ROOT / "artifacts" / "predictions" / "sc_to_st"
 LEGACY_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "phase4_outputs"
+#: Roots searched for artifacts, in priority order. Referenced in user-facing
+#: messages so the reader can see exactly where the app looked.
+OUTPUT_ROOTS = (PRIMARY_OUTPUT_ROOT, LEGACY_OUTPUT_ROOT)
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,12 +42,14 @@ class ArtifactSet:
     recording_key: str
     psg_path: Path
     subject_id: str
+    root: Path
+    """Which output root this recording's artifacts were found under."""
 
 
 @st.cache_data(show_spinner=False)
 def _load_artifact_sets() -> list[ArtifactSet]:
     items: list[ArtifactSet] = []
-    for root in (PRIMARY_OUTPUT_ROOT, LEGACY_OUTPUT_ROOT):
+    for root in OUTPUT_ROOTS:
         if not root.exists():
             continue
         for folder in sorted(p for p in root.iterdir() if p.is_dir()):
@@ -49,7 +60,7 @@ def _load_artifact_sets() -> list[ArtifactSet]:
                 data = json.loads(manifest.read_text(encoding="utf-8"))
                 psg = Path(data["selected_psg"])
                 subj = str(data.get("selected_subject") or parse_psg_filename(psg).subject_id)
-                items.append(ArtifactSet(folder.name, psg, subj))
+                items.append(ArtifactSet(folder.name, psg, subj, root))
             except Exception:
                 continue
     return items
@@ -186,7 +197,7 @@ def _plot_confusion_matrices(raw_matrix: Iterable[Iterable[float]], norm_matrix:
 def _plot_10_20_montage(recording) -> plt.Figure:
     """Render a minimal sagittal 10-20 schematic for the recorded bipolar derivations.
 
-    This is intentionally a teaching / documentation view only: the actual Phase 4
+    This is intentionally a teaching / documentation view only: Sleep-EDF
     recordings provide bipolar derivations (Fpz-Cz, Pz-Oz) plus horizontal EOG,
     not a dense scalp montage suitable for a topomap.
     """
@@ -264,13 +275,14 @@ def _plot_10_20_montage(recording) -> plt.Figure:
     return fig
 
 
-st.set_page_config(page_title="Phase 4 Dashboard", layout="wide")
-st.title("Phase 4 Sleep Staging Dashboard")
-st.caption("Read-only dashboard built from the existing Phase 4 outputs.")
+st.set_page_config(page_title="Sleep Staging Dashboard", layout="wide")
+st.title("Sleep Staging Dashboard")
+st.caption("Read-only view of exported model results. Run `python main.py` to (re)generate them.")
 
 artifacts = _load_artifact_sets()
 if not artifacts:
-    st.error(f"No Phase 4 outputs found under {OUTPUT_ROOT}")
+    searched = "\n".join(f"- `{root}`" for root in OUTPUT_ROOTS)
+    st.error(f"No exported results found. Searched:\n{searched}\n\nRun `python main.py` first.")
     st.stop()
 
 recording_labels = [f"{a.recording_key} | subject {a.subject_id}" for a in artifacts]
@@ -370,9 +382,9 @@ st.pyplot(fig, clear_figure=True)
 
 st.markdown("### Topographic map")
 st.info(
-    "Topographic map is not shown because the available Phase 4 montage contains only three recorded channels "
-    "(Fpz-Cz, Pz-Oz, horizontal EOG) and does not provide enough spatial coverage for a scientifically "
-    "meaningful scalp topomap."
+    "Topographic map is not shown because Sleep-EDF records only three channels "
+    "(Fpz-Cz, Pz-Oz, horizontal EOG) as bipolar derivations. That is not enough spatial "
+    "coverage for a scientifically meaningful scalp topomap."
 )
 
-st.caption(f"Artifact source: {OUTPUT_ROOT}")
+st.caption(f"Artifact source: {selected.root}")

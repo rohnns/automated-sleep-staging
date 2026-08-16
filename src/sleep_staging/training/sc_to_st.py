@@ -1,15 +1,36 @@
 """Primary SC→ST external-generalization experiment orchestration.
 
-This module intentionally keeps the primary experiment separate from legacy
-SC-only artifacts. It discovers SC and ST recordings independently, builds a
-SC-only subject-wise train/validation split, and evaluates on the full ST
-cohort as the external test set.
+Naming
+------
+``SC`` and ``ST`` are the two Sleep-EDF Expanded cohorts:
+
+``SC`` = **Sleep Cassette** — 153 recordings from healthy subjects studied in
+their own homes (the training corpus here).
+``ST`` = **Sleep Telemetry** — 44 recordings from subjects with mild
+difficulty falling asleep, studied in hospital (the external test corpus).
+
+"SC→ST" therefore means *train on Sleep Cassette, test on Sleep Telemetry*:
+a deliberately harder external-validation protocol than a random split,
+because the test cohort differs in both population and recording setting.
+
+Protocol
+--------
+1. Discover SC and ST recordings independently.
+2. Build a subject-wise train/validation split over **SC only**
+   (55 train / 12 validation subjects; no subject spans both).
+3. Train and select checkpoints using SC train/validation exclusively.
+4. Evaluate once on the **entire ST cohort** (22 subjects) as a clean,
+   never-tuned-on external test set.
+
+This module keeps the primary experiment separate from the legacy SC-only
+artifacts, so neither can contaminate the other.
 """
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 import dataclasses
+import gc
 import json
 import pickle
 from pathlib import Path
@@ -19,58 +40,42 @@ import numpy as np
 import torch
 
 from sleep_staging import __version__ as PACKAGE_VERSION
-from sleep_staging.acquisition.loader import discover_recordings, load_recording
+from sleep_staging.acquisition.loader import discover_recordings
 from sleep_staging.acquisition.utils import parse_psg_filename
+from sleep_staging.common.logging_utils import get_logger
 from sleep_staging.config import load_settings
-from sleep_staging.evaluation.output import EpochPredictionRecord, build_epoch_predictions, compute_sleep_statistics, plot_hypnogram, save_predictions_csv
+from sleep_staging.evaluation.output import (
+    EpochPredictionRecord,
+    build_epoch_predictions,
+    plot_hypnogram,
+    save_predictions_csv,
+)
 from sleep_staging.models.factory import build_baseline_model
-from sleep_staging.preprocessing.pipeline import preprocess_recording
-from sleep_staging.representations.factory import build_encoder
-from sleep_staging.representations.types import EncodedDataset, EncodedDatasetCollection, LabelVocabulary
+from sleep_staging.representations.types import EncodedDatasetCollection
+from sleep_staging.training import sc_to_st_cache
 from sleep_staging.training.classical import train_bandpower_logistic_regression
-from sleep_staging.training.dataset import EpochDataset
-from sleep_staging.training.experiment import build_shared_subject_split
-from sleep_staging.training.metrics import compute_classification_metrics
-from sleep_staging.training.split import assert_no_subject_leakage, sleep_edf_subject_key, subject_wise_split
-from sleep_staging.training.trainer import TrainRecipe, select_device, train_baseline
-from sleep_staging.training.trainer import collate_epoch_batch, make_loader
+from sleep_staging.training.dataset import EpochDataset, summarize_partition
+from sleep_staging.training.split import assert_no_subject_leakage, subject_wise_split
+from sleep_staging.training.trainer import (
+    TrainRecipe,
+    autocast_for_device,
+    make_loader,
+    select_device,
+    train_baseline,
+)
 
+
+logger = get_logger(__name__)
 
 PRIMARY_EXPERIMENT_NAME = "sc_to_st_external_generalization"
 PRIMARY_ARTIFACT_ROOT = Path("artifacts")
 PRIMARY_MODEL_ROOT = Path("models")
-DEFAULT_DATASET_ROOT = Path("D:/SleepEDFX")
 
-REPRESENTATION_TO_ARTIFACT = {
-    "raw": "raw",
-    "bandpower": "bandpower",
-    "time_frequency": "time_frequency",
-}
 REPRESENTATION_TO_MODEL_DIR = {
     "raw": "raw_cnn",
     "bandpower": "bandpower_mlp",
     "time_frequency": "stft_cnn",
 }
-
-
-@dataclass(frozen=True, slots=True)
-class CohortArtifacts:
-    sc_train_subjects: tuple[str, ...]
-    sc_val_subjects: tuple[str, ...]
-    st_test_subjects: tuple[str, ...]
-    sc_recordings: tuple[Path, ...]
-    st_recordings: tuple[Path, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class ExperimentArtifactSummary:
-    experiment_name: str
-    model_name: str
-    representation: str
-    model_dir: Path
-    predictions_path: Path
-    metrics_path: Path
-    metadata_path: Path
 
 
 def _ensure_dir(path: Path) -> Path:
@@ -86,7 +91,23 @@ def discover_sc_st_recordings(dataset_root: Path) -> tuple[tuple[Path, ...], tup
 
 
 def _subject_key(path: Path) -> str:
-    return sleep_edf_subject_key(parse_psg_filename(path))
+    """Subject grouping key for splitting -- MUST match ``EncodedDataset.subject_id``.
+
+    ``RecordingMetadata``/``EncodedDataset.subject_id`` is set (in
+    ``acquisition/metadata.py::extract_metadata``) to the bare 2-digit
+    ``SleepEDFFileIds.subject_id`` (e.g. ``"00"``), *not*
+    ``sleep_edf_subject_key`` (``study+series+subject``, e.g. ``"SC400"``).
+    ``EpochDataset``/``filter_collection_by_subjects`` filter encoded
+    collections by exact string equality against ``item.subject_id``, so a
+    split key built any other way silently matches zero recordings.
+
+    The bare subject code is safe to use as the grouping key here because
+    ``sc_recordings``/``st_recordings`` are already filtered to a single
+    study each (SC or ST) with a constant ``series`` digit, so it remains
+    unique per real subject within each cohort -- it just needs to be the
+    *same string* the encoder actually stored.
+    """
+    return parse_psg_filename(path).subject_id
 
 
 def build_sc_split(
@@ -119,15 +140,19 @@ def _preprocess_and_encode_recordings(
     settings,
     representation: str,
 ) -> EncodedDatasetCollection:
-    enc_settings = dataclasses.replace(settings.encodings, representation=representation)
-    encoder = build_encoder(enc_settings)
-    vocab = LabelVocabulary(ignore_label=settings.encodings.ignore_label, ignore_index=settings.encodings.ignore_index)
-    datasets: list[EncodedDataset] = []
-    for path in recording_paths:
-        recording = load_recording(path, settings=settings.acquisition, preload=settings.acquisition.preload)
-        preprocessed = preprocess_recording(recording, settings.preprocessing, copy=False)
-        datasets.append(encoder(preprocessed, vocabulary=vocab))
-    return EncodedDatasetCollection(items=tuple(datasets))
+    """Encode recordings for one representation, resuming from per-recording cache.
+
+    Delegates to :mod:`sleep_staging.training.sc_to_st_cache`, which checks
+    ``artifacts/cache/sc_to_st/<representation>/`` for each recording before
+    falling back to the production preprocessing + encoding pipeline. This is
+    the single choke point every caller in this module goes through, so the
+    cache applies uniformly to SC and ST recordings and to all four models.
+    """
+    return sc_to_st_cache.encode_recordings_with_cache(
+        recording_paths,
+        settings=settings,
+        representation=representation,
+    )
 
 
 def build_primary_collections(
@@ -136,7 +161,19 @@ def build_primary_collections(
     dataset_root: Path | None = None,
     max_sc_recordings: int | None = None,
     max_st_recordings: int | None = None,
-) -> tuple[object, tuple[Path, ...], tuple[Path, ...], dict[str, EncodedDatasetCollection]]:
+) -> tuple[object, tuple[Path, ...], tuple[Path, ...]]:
+    """Resolve settings and discover SC/ST recording paths.
+
+    Deliberately does NOT encode any representation here. Measured from the
+    on-disk cache: raw ~8.0 GB (SC 6.57 + ST 1.43), time_frequency ~5.24 GB
+    (SC 4.31 + ST 0.93), bandpower ~tiny -- holding all three fully-decoded
+    collections in memory simultaneously (~12.4 GB+, before Python/torch/mne
+    process overhead) exceeds this machine's ~15.65 GB total RAM. Callers
+    must encode one representation at a time via
+    ``_preprocess_and_encode_recordings`` and release it before moving to
+    the next -- see ``run_primary_experiment``, which processes
+    representations sequentially for exactly this reason.
+    """
     settings = _load_settings_with_root(config_path, dataset_root)
     sc_recordings, st_recordings = discover_sc_st_recordings(settings.acquisition.data_root)
     if max_sc_recordings is not None:
@@ -147,21 +184,7 @@ def build_primary_collections(
         raise ValueError("No SC recordings discovered")
     if not st_recordings:
         raise ValueError("No ST recordings discovered")
-    collections = {
-        rep: _preprocess_and_encode_recordings(
-            sc_recordings if rep != "time_frequency" else sc_recordings,
-            settings=settings,
-            representation=rep,
-        )
-        for rep in ("raw", "bandpower", "time_frequency")
-    }
-    # Validate identical subject set across representations.
-    raw_subjects = tuple(sorted({item.subject_id for item in collections["raw"].items}))
-    for rep in ("bandpower", "time_frequency"):
-        subj = tuple(sorted({item.subject_id for item in collections[rep].items}))
-        if subj != raw_subjects:
-            raise ValueError(f"Representation {rep} has mismatched subjects")
-    return settings, sc_recordings, st_recordings, collections
+    return settings, sc_recordings, st_recordings
 
 
 def _artifact_paths(model_dir: Path, representation: str) -> tuple[Path, Path, Path]:
@@ -189,7 +212,8 @@ def _predict_epoch_dataset(
     with torch.no_grad():
         for batch in loader:
             batch = {k: (v.to(device) if hasattr(v, "to") else v) for k, v in batch.items()}
-            logits = model(batch["features"])
+            with autocast_for_device(device):
+                logits = model(batch["features"])
             preds = torch.argmax(logits, dim=1).detach().cpu().tolist()
             labels = batch["label"].detach().cpu().tolist()
             batch_size = len(preds)
@@ -244,35 +268,81 @@ def _save_model_metadata(
     return meta_path
 
 
-def _save_metrics_bundle(
+def _class_distribution(dataset: EpochDataset) -> dict[int, int]:
+    counts: dict[int, int] = {}
+    for example in dataset.examples:
+        counts[int(example.label)] = counts.get(int(example.label), 0) + 1
+    return counts
+
+
+def _log_split_diagnostics(
     *,
-    rep_name: str,
-    result,
-    pred_dir: Path,
-    rep_dir: Path,
-    fig_dir: Path,
-    dataset_name: str,
-) -> dict[str, object]:
-    train_result = result.train_result
-    metrics = train_result.test_metrics
-    assert metrics is not None
-    pred_path = pred_dir / f"{rep_name}_predictions.csv"
-    metrics_path = rep_dir / f"{rep_name}_metrics.json"
-    fig_path = fig_dir / f"{rep_name}_hypnogram.png"
-    preds = train_result.test_metrics  # placeholder: predictions are written below if available
-    payload = {
-        "experiment_name": PRIMARY_EXPERIMENT_NAME,
-        "dataset_name": dataset_name,
-        "representation": rep_name,
-        "metrics": metrics.as_dict(),
-        "split": result.split.as_dict(),
-    }
-    metrics_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
-    return {
-        "metrics_path": metrics_path,
-        "predictions_path": pred_path,
-        "figure_path": fig_path,
-    }
+    rep: str,
+    collection: EncodedDatasetCollection,
+    sc_train: tuple[str, ...],
+    sc_val: tuple[str, ...],
+    train_ds: EpochDataset,
+    val_ds: EpochDataset,
+    test_ds: EpochDataset,
+) -> None:
+    """Log concrete counts at every filtering stage and fail loudly if a
+    split ends up empty, instead of surfacing as a cryptic
+    ``num_samples=0`` deep inside torch.utils.data.DataLoader/RandomSampler.
+    """
+    available_subjects = tuple(sorted({item.subject_id for item in collection.items}))
+    train_stats = summarize_partition(collection, sc_train)
+    val_stats = summarize_partition(collection, sc_val)
+    logger.info(
+        "[%s] encoded collection: %d recording(s), %d distinct subject key(s): %s",
+        rep,
+        len(collection.items),
+        len(available_subjects),
+        available_subjects,
+    )
+    logger.info(
+        "[%s] sc_train: requested %d subject key(s) -> matched %d recording(s), "
+        "%d epoch(s) (supervised=%d, ignore=%d) -> train_dataset len=%d",
+        rep,
+        len(sc_train),
+        train_stats.n_subjects,
+        train_stats.n_epochs,
+        train_stats.n_epochs_supervised,
+        train_stats.n_epochs_ignore,
+        len(train_ds),
+    )
+    logger.info(
+        "[%s] sc_val: requested %d subject key(s) -> matched %d recording(s), "
+        "%d epoch(s) (supervised=%d, ignore=%d) -> val_dataset len=%d",
+        rep,
+        len(sc_val),
+        val_stats.n_subjects,
+        val_stats.n_epochs,
+        val_stats.n_epochs_supervised,
+        val_stats.n_epochs_ignore,
+        len(val_ds),
+    )
+    logger.info("[%s] test_dataset (full ST cohort, unfiltered) len=%d", rep, len(test_ds))
+    logger.info(
+        "[%s] class distribution: train=%s val=%s",
+        rep,
+        _class_distribution(train_ds),
+        _class_distribution(val_ds),
+    )
+    if len(train_ds) == 0:
+        raise ValueError(
+            f"[{rep}] train_dataset has 0 examples after subject filtering. "
+            f"Requested sc_train subject key(s) {sc_train!r} matched "
+            f"{train_stats.n_subjects} recording(s) out of {len(available_subjects)} "
+            f"available subject key(s) in the encoded collection: {available_subjects!r}. "
+            "This almost always means the split-builder's subject-key format "
+            "does not match EncodedDataset.subject_id (see _subject_key)."
+        )
+    if len(val_ds) == 0:
+        raise ValueError(
+            f"[{rep}] val_dataset has 0 examples after subject filtering. "
+            f"Requested sc_val subject key(s) {sc_val!r} matched {val_stats.n_subjects} "
+            f"recording(s) out of {len(available_subjects)} available: {available_subjects!r}."
+        )
 
 
 def run_primary_experiment(
@@ -284,7 +354,7 @@ def run_primary_experiment(
     max_st_recordings: int | None = None,
     smoke: bool = False,
 ) -> dict[str, object]:
-    settings, sc_recordings, st_recordings, collections = build_primary_collections(
+    settings, sc_recordings, st_recordings = build_primary_collections(
         config_path=config_path,
         dataset_root=dataset_root,
         max_sc_recordings=max_sc_recordings,
@@ -303,16 +373,6 @@ def run_primary_experiment(
 
     sc_train = sc_train_subjects
     sc_val = sc_val_subjects
-    train_ds_by_rep: dict[str, EpochDataset] = {}
-    val_ds_by_rep: dict[str, EpochDataset] = {}
-    test_ds_by_rep: dict[str, EpochDataset] = {}
-    for rep, col in collections.items():
-        train_ds_by_rep[rep] = EpochDataset(col, subject_ids=sc_train, drop_ignore=False)
-        val_ds_by_rep[rep] = EpochDataset(col, subject_ids=sc_val, drop_ignore=False)
-        test_ds_by_rep[rep] = EpochDataset(
-            _preprocess_and_encode_recordings(st_recordings, settings=settings, representation=rep),
-            drop_ignore=False,
-        )
 
     model_names = [model] if model != "all" else ["raw", "bandpower", "time_frequency", "classical"]
     results: dict[str, object] = {
@@ -325,12 +385,25 @@ def run_primary_experiment(
     }
     device = select_device()
     for rep in model_names:
+        if device.type == "cuda":
+            # Release any cached-but-unused blocks from the previous
+            # representation's training before starting the next one.
+            torch.cuda.empty_cache()
         if rep == "classical":
-            bp_col = collections["bandpower"]
+            bp_col = _preprocess_and_encode_recordings(sc_recordings, settings=settings, representation="bandpower")
             train_ds = EpochDataset(bp_col, subject_ids=sc_train, drop_ignore=False)
             val_ds = EpochDataset(bp_col, subject_ids=sc_val, drop_ignore=False)
             st_bp = _preprocess_and_encode_recordings(st_recordings, settings=settings, representation="bandpower")
             test_ds = EpochDataset(st_bp, drop_ignore=False)
+            _log_split_diagnostics(
+                rep="classical(bandpower)",
+                collection=bp_col,
+                sc_train=sc_train,
+                sc_val=sc_val,
+                train_ds=train_ds,
+                val_ds=val_ds,
+                test_ds=test_ds,
+            )
             res = train_bandpower_logistic_regression(
                 train_dataset=train_ds,
                 val_dataset=val_ds,
@@ -385,9 +458,15 @@ def run_primary_experiment(
                 "metadata_path": str(meta_path),
                 "test_metrics": None if res.test_metrics is None else res.test_metrics.as_dict(),
             }
+            # Release this representation's data before the next one starts;
+            # see build_primary_collections's docstring for why this matters
+            # (~12+ GB to hold all three representations at once vs. ~16 GB
+            # total system RAM on this machine).
+            del bp_col, train_ds, val_ds, st_bp, test_ds, res
+            gc.collect()
             continue
 
-        col = collections[rep]
+        col = _preprocess_and_encode_recordings(sc_recordings, settings=settings, representation=rep)
         model_impl = build_baseline_model(rep, in_channels=col.items[0].metadata.feature_shape[0], n_band_features=col.items[0].metadata.feature_shape[-1] if rep == "bandpower" else 10)
         recipe = TrainRecipe(
             seed=settings.experiment.train.seed,
@@ -400,12 +479,22 @@ def run_primary_experiment(
             class_weighting=settings.experiment.train.class_weighting,
             early_stopping_patience=settings.experiment.train.early_stopping_patience,
             checkpoint_dir=_ensure_dir(PRIMARY_MODEL_ROOT / REPRESENTATION_TO_MODEL_DIR[rep]),
+            block_size=settings.experiment.train.block_size,
         )
         train_ds = EpochDataset(col, subject_ids=sc_train, drop_ignore=False)
         val_ds = EpochDataset(col, subject_ids=sc_val, drop_ignore=False)
         test_ds = EpochDataset(
             _preprocess_and_encode_recordings(st_recordings, settings=settings, representation=rep),
             drop_ignore=False,
+        )
+        _log_split_diagnostics(
+            rep=rep,
+            collection=col,
+            sc_train=sc_train,
+            sc_val=sc_val,
+            train_ds=train_ds,
+            val_ds=val_ds,
+            test_ds=test_ds,
         )
         train_result = train_baseline(
             model_impl,
@@ -450,6 +539,12 @@ def run_primary_experiment(
             "test_metrics": None if train_result.test_metrics is None else train_result.test_metrics.as_dict(),
             "device": train_result.device,
         }
+        # Release this representation's data before the next one starts;
+        # see build_primary_collections's docstring for why this matters
+        # (~12+ GB to hold all three representations at once vs. ~16 GB
+        # total system RAM on this machine).
+        del col, train_ds, val_ds, test_ds, model_impl, train_result
+        gc.collect()
     return results
 
 

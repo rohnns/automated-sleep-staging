@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Export whole-night predictions and sleep statistics for all held-out test recordings.
 
-Uses the existing Phase 4a trained checkpoints and the exact recovered held-out
+Uses the existing trained checkpoints and the exact recovered held-out
 subject split. Does not retrain or modify preprocessing / encoders / models.
 """
 

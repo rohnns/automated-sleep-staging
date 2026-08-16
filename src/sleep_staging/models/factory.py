@@ -1,4 +1,4 @@
-"""Model factory for Phase 4a baselines."""
+"""Model factory for the baseline architectures."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ def build_baseline_model(
     n_classes: int = 5,
     n_band_features: int = 10,
 ) -> nn.Module:
-    """Build the Phase 4a baseline matching an encoding representation."""
+    """Build the baseline model matching an encoding representation."""
     if representation == "raw":
         return RawCNN1D(in_channels=in_channels, n_classes=n_classes)
     if representation == "bandpower":

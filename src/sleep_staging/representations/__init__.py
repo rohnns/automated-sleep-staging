@@ -1,4 +1,4 @@
-"""Public API for Phase 3 representations.
+"""Public API for representations.
 
 Raw, band-power (Welch), and STFT time-frequency encoders are implemented.
 CWT remains a future backend option.

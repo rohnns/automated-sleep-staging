@@ -190,13 +190,21 @@ def preprocess_recording(
     *,
     copy: bool = True,
 ) -> PreprocessedRecording:
-    """Convenience: build the default pipeline and run it."""
+    """Convenience: build the default pipeline and run it.
+
+    Deliberately does *not* preload here. ``ChannelSelector`` (transform #3,
+    before any data-touching stage) narrows ``raw`` down to the 2-3 needed
+    channels while still lazy (``Raw.pick`` is metadata-only). Every
+    transform that actually needs samples (``BadChannelDetector``,
+    ``SignalFilter``, ``ICATransform``, ``WakeCropper``,
+    ``AmplitudeEpochRejector``, ``RecordingNormalizer``) already guards with
+    ``if not raw.preload: raw.load_data()`` and will trigger the load itself,
+    at which point only the already-selected, already-homogeneous-rate
+    channels get read from disk. Preloading eagerly here would instead force
+    MNE to materialize (and, for EDF files with heterogeneous per-channel
+    sampling rates, resample) *every* channel across the *entire* recording
+    before channel selection ever runs -- the actual cause of the
+    long-recording OOM this function used to trigger.
+    """
     pipeline = build_default_pipeline(settings)
-    # Filter/ICA/normalize need preloaded data; wake crop also loads as needed.
-    needs_preload = (
-        settings.filter.enabled
-        or settings.ica.enabled
-        or settings.amplitude_reject.enabled
-        or settings.normalize.enabled
-    )
-    return pipeline.run(recording, copy=copy, preload=needs_preload)
+    return pipeline.run(recording, copy=copy, preload=False)

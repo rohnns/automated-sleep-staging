@@ -1,4 +1,4 @@
-"""Single classical baseline for Phase 4a: BandPower → LogisticRegression."""
+"""Single classical baseline: BandPower → LogisticRegression."""
 
 from __future__ import annotations
 

@@ -79,6 +79,7 @@ class STFTBackend(TimeFrequencyBackend):
         eps: float = 1e-10,
         expected_sfreq: float = 100.0,
         dtype: str = "float32",
+        chunk_size: int = 256,
     ) -> None:
         if n_fft <= 0:
             raise ValueError("n_fft must be positive")
@@ -92,6 +93,8 @@ class STFTBackend(TimeFrequencyBackend):
             raise ValueError("eps must be positive")
         if expected_sfreq <= 0:
             raise ValueError("expected_sfreq must be positive")
+        if chunk_size <= 0:
+            raise ValueError("chunk_size must be positive")
 
         self.n_fft = int(n_fft)
         self.hop_length = int(hop_length)
@@ -104,6 +107,12 @@ class STFTBackend(TimeFrequencyBackend):
         self.eps = float(eps)
         self.expected_sfreq = float(expected_sfreq)
         self.dtype = np.dtype(dtype)
+        # Epochs per STFT batch. Purely an implementation/memory-footprint
+        # knob (not part of the scientific definition of the representation):
+        # deliberately NOT sourced from STFTEncodingSettings / config, because
+        # encoder_fingerprint() hashes every field of that dataclass and this
+        # value must never affect cache validity or output values.
+        self.chunk_size = int(chunk_size)
 
         if self.win_length <= 0:
             raise ValueError("win_length must be positive")
@@ -124,12 +133,49 @@ class STFTBackend(TimeFrequencyBackend):
         n_epochs, n_channels, n_times = signals.shape
         self._validate_geometry(sfreq=float(sfreq), n_times=n_times)
 
-        data = np.asarray(signals, dtype=np.float64)
+        expected_f, expected_t = self.output_hw(sfreq=float(sfreq), n_times=n_times)
+        features = np.empty((n_epochs, n_channels, expected_f, expected_t), dtype=self.dtype)
+
+        # Process epochs in bounded-size chunks so intermediate STFT arrays
+        # (complex zxx, abs/power/log spectrograms) scale with chunk_size
+        # rather than the full recording's epoch count. Each epoch's STFT is
+        # independent (no cross-epoch state), so this is bit-identical to
+        # running the whole recording through scipy.signal.stft at once.
+        chunk_size = min(self.chunk_size, n_epochs) if n_epochs > 0 else 0
+        for start in range(0, n_epochs, max(chunk_size, 1)):
+            stop = min(start + chunk_size, n_epochs)
+            features[start:stop] = self._transform_chunk(
+                signals[start:stop],
+                sfreq=sfreq,
+                n_channels=n_channels,
+                n_times=n_times,
+                expected_f=expected_f,
+                expected_t=expected_t,
+            )
+
+        if not np.isfinite(features).all():
+            raise EncodingError("STFTBackend produced non-finite features")
+        return features
+
+    def _transform_chunk(
+        self,
+        signals_chunk: NDArray[np.floating],
+        *,
+        sfreq: float,
+        n_channels: int,
+        n_times: int,
+        expected_f: int,
+        expected_t: int,
+    ) -> NDArray[np.floating]:
+        """Run the STFT pipeline on one bounded chunk of epochs."""
+        chunk_epochs = signals_chunk.shape[0]
+
+        data = np.asarray(signals_chunk, dtype=np.float64)
         if not np.isfinite(data).all():
             data = np.nan_to_num(data, nan=0.0, posinf=0.0, neginf=0.0)
 
         noverlap = self.win_length - self.hop_length
-        flat = data.reshape(n_epochs * n_channels, n_times)
+        flat = data.reshape(chunk_epochs * n_channels, n_times)
         freqs, _times, zxx = signal.stft(
             flat,
             fs=float(sfreq),
@@ -159,18 +205,14 @@ class STFTBackend(TimeFrequencyBackend):
             )
         spec = spec[:, freq_mask, :]
 
-        expected_f, expected_t = self.output_hw(sfreq=float(sfreq), n_times=n_times)
         if spec.shape[-2] != expected_f or spec.shape[-1] != expected_t:
             raise EncodingError(
                 f"STFT geometry mismatch: got F,T={spec.shape[-2:]} "
                 f"expected ({expected_f}, {expected_t})"
             )
 
-        features = spec.reshape(n_epochs, n_channels, expected_f, expected_t)
-        features = np.array(features, dtype=self.dtype, copy=True)
-        if not np.isfinite(features).all():
-            raise EncodingError("STFTBackend produced non-finite features")
-        return features
+        chunk_features = spec.reshape(chunk_epochs, n_channels, expected_f, expected_t)
+        return np.asarray(chunk_features, dtype=self.dtype)
 
     def frequency_axis(self, *, sfreq: float, n_times: int) -> tuple[float, ...]:
         _ = n_times

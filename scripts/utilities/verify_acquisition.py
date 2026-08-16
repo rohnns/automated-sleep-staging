@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phase 1 acquisition validation for Sleep-EDF Expanded.
+"""Acquisition validation for Sleep-EDF Expanded.
 
 Loads every discoverable PSG + hypnogram pair through the public
 ``sleep_staging.acquisition`` API and prints a concise validation report.
@@ -79,7 +79,7 @@ class RecordingSummary:
 
 @dataclass
 class VerificationReport:
-    """Aggregated Phase 1 validation results."""
+    """Aggregated acquisition validation results."""
 
     data_root: Path
     psg_files: list[Path] = field(default_factory=list)
@@ -177,10 +177,10 @@ def _fmt_channel_set(names: tuple[str, ...], types: tuple[str, ...]) -> str:
 
 
 def print_report(report: VerificationReport) -> None:
-    """Print a concise Phase 1 validation report to stdout."""
+    """Print a concise acquisition validation report to stdout."""
     print()
     print("=" * 72)
-    print("Phase 1 acquisition verification report")
+    print("Acquisition verification report")
     print("=" * 72)
     print(f"Data root          : {report.data_root}")
     print(f"PSG files found    : {report.n_psg}")
@@ -278,7 +278,7 @@ def print_report(report: VerificationReport) -> None:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Validate Phase 1 Sleep-EDF acquisition (public API only).",
+        description="Validate Sleep-EDF acquisition (public API only).",
     )
     parser.add_argument(
         "--config",

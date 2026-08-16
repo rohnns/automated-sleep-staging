@@ -125,7 +125,7 @@ def summarize_sc_subject_split(
     seed: int = 42,
     wake_buffer_sec: float = 1800.0,
 ) -> tuple[SubjectSplit, dict[str, SplitEpochStats]]:
-    """Build the Phase 4a SC subject split and IGNORE-aware epoch totals."""
+    """Build the SC subject split and IGNORE-aware epoch totals."""
     by_subject = count_sc_epochs_by_subject(data_root, wake_buffer_sec=wake_buffer_sec)
     split = subject_wise_split(tuple(by_subject.keys()), ratios=ratios, seed=seed)
 

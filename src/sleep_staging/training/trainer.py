@@ -1,4 +1,4 @@
-"""Fixed-recipe trainer for Phase 4a representation baselines."""
+"""Fixed-recipe trainer for the representation baselines."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 from sleep_staging.common.logging_utils import get_logger
 from sleep_staging.training.dataset import EpochDataset, collate_epoch_batch
 from sleep_staging.training.metrics import ClassificationMetrics, compute_classification_metrics
+from sleep_staging.training.sampler import LocalityAwareSampler
 
 logger = get_logger(__name__)
 
@@ -22,7 +23,7 @@ IGNORE_INDEX = -100
 
 @dataclass(frozen=True, slots=True)
 class TrainRecipe:
-    """Single shared training recipe for all Phase 4a representations."""
+    """One training recipe, shared unchanged by every representation."""
 
     seed: int = 42
     batch_size: int = 32
@@ -35,6 +36,7 @@ class TrainRecipe:
     early_stopping_patience: int | None = 5
     checkpoint_dir: Path | None = None
     checkpoint_name: str = "best_model.pt"
+    block_size: int = 4
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +95,28 @@ def compute_class_weights_from_dataset(
     return torch.as_tensor(weights, dtype=torch.float32)
 
 
+def autocast_for_device(device: torch.device):
+    """bf16 autocast on CUDA (Ada/RTX-40-series supports bf16 tensor cores
+    natively, so no GradScaler is needed -- bf16 has fp32's exponent range,
+    just less mantissa precision). No-op elsewhere (CPU/MPS), so behavior on
+    those devices -- including existing CPU-run tests -- is unchanged.
+    """
+    enabled = device.type == "cuda"
+    return torch.autocast(device_type=device.type, dtype=torch.bfloat16, enabled=enabled)
+
+
+def _log_cuda_memory(device: torch.device, *, tag: str) -> None:
+    if device.type != "cuda":
+        return
+    logger.info(
+        "%s: cuda memory allocated=%.1fMB reserved=%.1fMB max_allocated=%.1fMB",
+        tag,
+        torch.cuda.memory_allocated(device) / 1e6,
+        torch.cuda.memory_reserved(device) / 1e6,
+        torch.cuda.max_memory_allocated(device) / 1e6,
+    )
+
+
 def _move_batch(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
     return {
         "features": batch["features"].to(device),
@@ -125,14 +149,17 @@ def evaluate(
 
     for batch in loader:
         batch = _move_batch(batch, device)
-        logits = model(batch["features"])
-        if logits.ndim != 2 or logits.shape[1] != 5:
-            raise RuntimeError(f"Expected logits (B, 5), got {tuple(logits.shape)}")
-        labels = batch["label"]
-        supervised = labels != ignore_index
-        n_sup = int(supervised.sum().item())
+        with autocast_for_device(device):
+            logits = model(batch["features"])
+            if logits.ndim != 2 or logits.shape[1] != 5:
+                raise RuntimeError(f"Expected logits (B, 5), got {tuple(logits.shape)}")
+            labels = batch["label"]
+            supervised = labels != ignore_index
+            n_sup = int(supervised.sum().item())
+            if n_sup > 0:
+                loss = criterion(logits, labels)
+
         if n_sup > 0:
-            loss = criterion(logits, labels)
             total_loss += float(loss.item()) * n_sup
             total_weight += n_sup
 
@@ -163,15 +190,16 @@ def train_one_epoch(
     for batch in loader:
         batch = _move_batch(batch, device)
         optimizer.zero_grad(set_to_none=True)
-        logits = model(batch["features"])
-        if logits.ndim != 2 or logits.shape[1] != 5:
-            raise RuntimeError(f"Expected logits (B, 5), got {tuple(logits.shape)}")
-        labels = batch["label"]
-        supervised = labels != ignore_index
-        n_sup = int(supervised.sum().item())
-        if n_sup == 0:
-            continue
-        loss = criterion(logits, labels)
+        with autocast_for_device(device):
+            logits = model(batch["features"])
+            if logits.ndim != 2 or logits.shape[1] != 5:
+                raise RuntimeError(f"Expected logits (B, 5), got {tuple(logits.shape)}")
+            labels = batch["label"]
+            supervised = labels != ignore_index
+            n_sup = int(supervised.sum().item())
+            if n_sup == 0:
+                continue
+            loss = criterion(logits, labels)
         loss.backward()
         optimizer.step()
 
@@ -192,16 +220,33 @@ def make_loader(
     shuffle: bool,
     seed: int,
     num_workers: int = 0,
+    block_size: int = 4,
 ) -> DataLoader:
-    generator = torch.Generator()
-    generator.manual_seed(seed)
+    """Build a DataLoader.
+
+    When ``shuffle=True`` this uses ``LocalityAwareSampler`` instead of
+    PyTorch's default ``RandomSampler`` -- see ``training/sampler.py`` for
+    why: a fully global shuffle over a memory-mapped dataset causes OS
+    page-cache thrashing once the dataset no longer fits comfortably in free
+    RAM. ``shuffle=False`` (validation/test) is unaffected -- it already
+    iterates in the dataset's natural, already-recording-contiguous order,
+    which was never the thrashing source.
+    """
+    if shuffle:
+        sampler = LocalityAwareSampler(dataset, block_size=block_size, seed=seed)
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            sampler=sampler,
+            num_workers=num_workers,
+            collate_fn=collate_epoch_batch,
+        )
     return DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=shuffle,
+        shuffle=False,
         num_workers=num_workers,
         collate_fn=collate_epoch_batch,
-        generator=generator if shuffle else None,
     )
 
 
@@ -248,12 +293,33 @@ def train_baseline(
     set_seed(recipe.seed)
     model = model.to(device)
 
+    logger.info(
+        "train_baseline: dataset lengths train=%d val=%d test=%s",
+        len(train_dataset),
+        len(val_dataset),
+        "n/a" if test_dataset is None else len(test_dataset),
+    )
+    if len(train_dataset) == 0:
+        raise ValueError(
+            "train_dataset has 0 examples -- cannot build a DataLoader "
+            "(torch.utils.data.RandomSampler requires num_samples > 0). "
+            "This is almost always a subject-id/split mismatch upstream "
+            "(the split builder's subject keys don't match "
+            "EncodedDataset.subject_id), not a trainer bug."
+        )
+    if len(val_dataset) == 0:
+        raise ValueError(
+            "val_dataset has 0 examples -- cannot build a DataLoader. "
+            "Check the val split's subject keys against EncodedDataset.subject_id."
+        )
+
     train_loader = make_loader(
         train_dataset,
         batch_size=recipe.batch_size,
         shuffle=True,
         seed=recipe.seed,
         num_workers=recipe.num_workers,
+        block_size=recipe.block_size,
     )
     val_loader = make_loader(
         val_dataset,
@@ -289,22 +355,48 @@ def train_baseline(
     if recipe.checkpoint_dir is not None:
         checkpoint_path = Path(recipe.checkpoint_dir) / recipe.checkpoint_name
 
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
+
     for epoch in range(recipe.max_epochs):
-        train_result = train_one_epoch(
-            model,
-            train_loader,
-            optimizer=optimizer,
-            device=device,
-            criterion=criterion,
-            ignore_index=recipe.ignore_index,
-        )
-        val_result = evaluate(
-            model,
-            val_loader,
-            device=device,
-            ignore_index=recipe.ignore_index,
-            criterion=criterion,
-        )
+        try:
+            train_result = train_one_epoch(
+                model,
+                train_loader,
+                optimizer=optimizer,
+                device=device,
+                criterion=criterion,
+                ignore_index=recipe.ignore_index,
+            )
+            val_result = evaluate(
+                model,
+                val_loader,
+                device=device,
+                ignore_index=recipe.ignore_index,
+                criterion=criterion,
+            )
+        except RuntimeError as exc:
+            # torch's OOM exception type has changed across versions
+            # (torch.cuda.OutOfMemoryError vs. torch.AcceleratorError, both
+            # RuntimeError subclasses) -- match on message instead of a
+            # specific class so this stays correct across torch versions.
+            if device.type != "cuda" or "out of memory" not in str(exc).lower():
+                raise
+            # Diagnose (don't swallow): dump the allocator's own breakdown of
+            # what actually holds memory at the moment of failure, then
+            # re-raise so the run still fails loudly.
+            logger.error(
+                "CUDA OOM at epoch=%d. Allocator summary:\n%s",
+                epoch,
+                torch.cuda.memory_summary(device),
+            )
+            raise
+
+        _log_cuda_memory(device, tag=f"epoch={epoch} end")
+        if device.type == "cuda":
+            torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats(device)
+
         overfit_gap = train_result.loss - val_result.loss
         row = {
             "epoch": float(epoch),

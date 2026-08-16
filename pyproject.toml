@@ -11,21 +11,26 @@ requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Sleep Staging Pipeline Contributors" }]
 keywords = ["eeg", "sleep-staging", "mne", "pytorch", "clinical"]
+# Pinned to the exact versions the reported results were produced with, so a
+# fresh environment reproduces them. `torch` is pinned without a local CUDA
+# suffix (the wheel actually used was 2.11.0+cu128); install the matching CUDA
+# build from the PyTorch index if GPU training is wanted, otherwise the CPU
+# wheel of the same version works and only changes speed, not results.
 dependencies = [
-    "mne>=1.6",
-    "matplotlib>=3.8",
-    "numpy>=1.26",
-    "pyyaml>=6.0",
-    "scikit-learn>=1.4",
-    "scipy>=1.11",
-    "streamlit>=1.56",
-    "torch>=2.2",
+    "mne==1.12.1",
+    "matplotlib==3.10.3",
+    "numpy==2.2.6",
+    "pyyaml==6.0.2",
+    "scikit-learn==1.8.0",
+    "scipy==1.15.3",
+    "streamlit==1.56.0",
+    "torch==2.11.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0",
-    "pytest-cov>=5.0",
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
 ]
 
 [tool.setuptools]

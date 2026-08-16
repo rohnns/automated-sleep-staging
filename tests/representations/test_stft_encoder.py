@@ -197,3 +197,97 @@ def test_stft_deterministic() -> None:
     a = _default_encoder().encode(batch).features
     b = _default_encoder().encode(batch).features
     np.testing.assert_array_equal(a, b)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for chunked STFT (memory-safety fix for long recordings).
+#
+# Each epoch's STFT is computed independently (no cross-epoch state, no
+# padding/boundary), so splitting the epoch axis into chunks must produce
+# results identical to processing every epoch in one shot -- only peak
+# memory usage should change.
+# ---------------------------------------------------------------------------
+
+
+def test_chunked_output_matches_unchunked_shape_and_values() -> None:
+    n_epochs = 7
+    batch = _sinusoid_batch(freqs_hz=[10.0, 2.0], n_epochs=n_epochs)
+
+    unchunked = STFTBackend(chunk_size=n_epochs)  # one chunk == old single-shot behavior
+    chunked = STFTBackend(chunk_size=2)  # forces 4 chunks (2,2,2,1) for 7 epochs
+
+    reference = TimeFrequencyEncoder(backend=unchunked).encode(batch).features
+    result = TimeFrequencyEncoder(backend=chunked).encode(batch).features
+
+    assert result.shape == reference.shape
+    # Per-epoch STFT is independent of chunking, so results must be exact.
+    np.testing.assert_array_equal(result, reference)
+
+
+def test_chunking_is_actually_exercised(monkeypatch) -> None:
+    n_epochs = 9
+    batch = _sinusoid_batch(freqs_hz=[10.0], n_epochs=n_epochs)
+    backend = STFTBackend(chunk_size=3)
+
+    chunk_sizes_seen: list[int] = []
+    original = backend._transform_chunk
+
+    def spy(signals_chunk, **kwargs):
+        chunk_sizes_seen.append(signals_chunk.shape[0])
+        return original(signals_chunk, **kwargs)
+
+    monkeypatch.setattr(backend, "_transform_chunk", spy)
+    TimeFrequencyEncoder(backend=backend).encode(batch)
+
+    assert len(chunk_sizes_seen) == 3
+    assert chunk_sizes_seen == [3, 3, 3]
+
+
+def test_chunk_size_smaller_than_one_epoch_still_covers_all_epochs() -> None:
+    # chunk_size larger than n_epochs collapses to a single chunk.
+    n_epochs = 3
+    batch = _sinusoid_batch(freqs_hz=[10.0], n_epochs=n_epochs)
+    backend = STFTBackend(chunk_size=100)
+    encoded = TimeFrequencyEncoder(backend=backend).encode(batch)
+    assert encoded.features.shape[0] == n_epochs
+    assert np.isfinite(encoded.features).all()
+
+
+def test_invalid_chunk_size_rejected() -> None:
+    with pytest.raises(ValueError, match="chunk_size"):
+        STFTBackend(chunk_size=0)
+
+
+def test_stft_encoding_settings_field_names_are_stable() -> None:
+    """``chunk_size`` must stay a STFTBackend-only implementation detail.
+
+    ``encoder_fingerprint`` (sc_to_st_cache.py) hashes every field of
+    STFTEncodingSettings; adding a config-driven chunk knob there would
+    silently invalidate every existing time_frequency cache entry.
+    """
+    import dataclasses
+
+    from sleep_staging.config.settings import STFTEncodingSettings
+
+    names = {f.name for f in dataclasses.fields(STFTEncodingSettings)}
+    assert names == {
+        "n_fft",
+        "hop_length",
+        "win_length",
+        "window",
+        "fmin",
+        "fmax",
+        "power",
+        "log_scale",
+        "eps",
+        "expected_sfreq",
+        "dtype",
+    }
+    assert not hasattr(STFTEncodingSettings(), "chunk_size")
+
+
+def test_default_chunk_size_bounds_memory_for_long_recordings() -> None:
+    # A 10h Sleep-EDF ST recording is ~1200 epochs; default chunk_size must
+    # be well below that so a full recording is never processed as one shot.
+    backend = STFTBackend()
+    assert 0 < backend.chunk_size < 1200

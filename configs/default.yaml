@@ -67,7 +67,7 @@ preprocessing:
     mark_mne_bads: true
   reference:
     mode: original
-    ica:
+  ica:
     # MNE ICA on selected EEG; optional EOG-guided component exclusion.
     # With SC's 2 EEG channels, rank is at most 2. correlation scoring is the
     # project baseline for EOG detection (zscore is unreliable at this rank).
@@ -87,7 +87,7 @@ preprocessing:
     eog_peak_to_peak: 1.0e-3
     emg_peak_to_peak: 1.0e-3
 
-# Phase 3 — representations.
+# Representations.
 # representation: raw | bandpower | time_frequency
 # Band power: 5 bands × (log-abs + relative) → (N, C, 10). No gamma (30 Hz LP).
 # Config key kept as 'encodings' for backward compatibility; Python package is 'representations'
@@ -140,7 +140,7 @@ encodings:
       output: magnitude
       log_scale: true
 
-# Phase 4a — controlled representation comparison infrastructure.
+# Controlled representation comparison.
 # Keep these fixed across Raw, BandPower, and STFT for the initial SC/Fpz-Cz bake-off.
 experiment:
   split:
@@ -152,7 +152,7 @@ experiment:
     test_ratio: 0.15
   train:
     seed: 42
-    batch_size: 64
+    batch_size: 32  # reduced from 64: safety margin for 6 GB (~5.3 GB usable) laptop GPUs
     max_epochs: 20
     learning_rate: 0.001
     weight_decay: 0.0
@@ -162,7 +162,8 @@ experiment:
     primary_metric: macro_f1
     class_weighting: balanced
     early_stopping_patience: 5
-    checkpoint_dir: outputs/checkpoints/phase4a
+    checkpoint_dir: outputs/checkpoints/baselines
+    block_size: 4  # locality-aware training sampler: recordings per shuffled block (memory/IO tuning only, not scientific)
   model:
     in_channels: 3
     n_classes: 5

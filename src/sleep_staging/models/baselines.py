@@ -1,4 +1,4 @@
-"""Phase 4a baseline classifiers for single-epoch sleep staging."""
+"""Baseline classifiers for single-epoch sleep staging."""
 
 from __future__ import annotations
 

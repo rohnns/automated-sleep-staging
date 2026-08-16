@@ -1,4 +1,4 @@
-"""Subject-wise splitting for Phase 4a (no recording-level leakage)."""
+"""Subject-wise splitting by subject ID (no recording-level leakage)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Architecture tests for Phase 3 encodings."""
+"""Architecture tests for the encoding layer."""
 
 from __future__ import annotations
 

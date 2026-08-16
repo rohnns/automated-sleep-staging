@@ -1,4 +1,4 @@
-"""Resumable classical baseline runner for Phase 4a.
+"""Resumable classical baseline runner.
 
 BandPower features are cached per recording under ``outputs/classical_baseline/cache``
 so interrupted runs can resume without recomputing already-encoded recordings.
@@ -28,7 +28,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "default.yaml"
 OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "classical_baseline"
 CACHE_ROOT = OUTPUT_ROOT / "cache"
-RESULT_PATH = OUTPUT_ROOT / "bandpower_logistic_regression_phase4a.json"
+RESULT_PATH = OUTPUT_ROOT / "bandpower_logistic_regression.json"
 MANIFEST_PATH = PROJECT_ROOT / "outputs" / "phase4_outputs" / "manifest.json"
 CACHE_FORMAT_VERSION = 1
 

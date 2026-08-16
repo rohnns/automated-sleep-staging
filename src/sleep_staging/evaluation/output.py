@@ -151,8 +151,15 @@ def plot_hypnogram(
 
 
 def _plot_stage_track(ax: Axes, onsets: np.ndarray, labels: np.ndarray, *, label: str, y_offset: float) -> None:
-    for onset, stage_idx in zip(onsets, labels, strict=True):
-        stage = stage_index_to_name(int(stage_idx))
-        color = STAGE_COLORS.get(stage, "#999999")
-        ax.broken_barh([(float(onset), 30.0)], (y_offset, 0.12), facecolors=color)
+    # A single broken_barh() call with one (onset, width) tuple + one color
+    # per epoch renders as one vectorized collection. The previous version
+    # called broken_barh() once per epoch (one artist each) -- fine for a
+    # handful of epochs, but for a full ST test set (~42,550 epochs) that's
+    # 42,550 separate matplotlib artists per track, which made legend
+    # scanning, layout, and rendering take hours instead of seconds. Same
+    # per-epoch stage->color mapping, just batched into one draw call.
+    xranges = [(float(onset), 30.0) for onset in onsets]
+    colors = [STAGE_COLORS.get(stage_index_to_name(int(stage_idx)), "#999999") for stage_idx in labels]
+    if xranges:
+        ax.broken_barh(xranges, (y_offset, 0.12), facecolors=colors)
     ax.text(0.0, y_offset + 0.05, label, va="center", ha="left", fontsize=9)

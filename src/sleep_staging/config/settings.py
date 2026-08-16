@@ -10,6 +10,7 @@ Preprocessing defaults are informed by ``scripts/utilities/dataset_statistics.py
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -17,6 +18,11 @@ from typing import Any, Mapping, Sequence
 import yaml
 
 from sleep_staging.config.exceptions import ConfigurationError
+
+#: Fallback Sleep-EDF Expanded location. Override per-machine with the
+#: ``SLEEP_EDF_ROOT`` environment variable (preferred) or ``acquisition.data_root``
+#: in the config file, so no machine-specific path needs to be committed.
+DEFAULT_DATA_ROOT = "D:/SleepEDFX"
 
 
 @dataclass(frozen=True, slots=True)
@@ -303,7 +309,7 @@ class TimeFrequencyEncodingSettings:
 
 @dataclass(frozen=True, slots=True)
 class EncodingSettings:
-    """Settings for Phase 3 encodings / representations.
+    """Settings for encodings / representations.
 
     ``representation`` selects which encoder the factory builds:
     ``raw`` | ``bandpower`` | ``time_frequency``.
@@ -337,7 +343,7 @@ class SplitSettings:
 
 @dataclass(frozen=True, slots=True)
 class TrainSettings:
-    """Fixed Phase 4a training recipe (identical for all representations)."""
+    """Fixed training recipe, identical for all representations."""
 
     seed: int = 42
     batch_size: int = 32
@@ -351,11 +357,18 @@ class TrainSettings:
     class_weighting: str = "balanced"
     early_stopping_patience: int | None = 5
     checkpoint_dir: Path | None = None
+    block_size: int = 4
+    """Recordings per locality block for the training DataLoader's sampler
+    (see training.sampler.LocalityAwareSampler). Purely a memory/IO
+    performance knob -- does not change which examples are trained on, the
+    model, loss, optimizer, or epoch count. Not part of preprocessing/
+    encoding identity, so changing it never invalidates cache fingerprints.
+    """
 
 
 @dataclass(frozen=True, slots=True)
 class ModelSettings:
-    """Phase 4a baseline model options."""
+    """Baseline model options."""
 
     in_channels: int = 1
     n_classes: int = 5
@@ -372,7 +385,7 @@ class ClassicalBaselineSettings:
 
 @dataclass(frozen=True, slots=True)
 class ExperimentSettings:
-    """Phase 4a experiment controls."""
+    """Experiment controls."""
 
     split: SplitSettings = field(default_factory=SplitSettings)
     train: TrainSettings = field(default_factory=TrainSettings)
@@ -790,7 +803,7 @@ def _load_encodings(raw: Mapping[str, Any]) -> EncodingSettings:
     )
 
 def _load_experiment(raw: Mapping[str, Any], *, project_root: Path) -> ExperimentSettings:
-    """Load Phase 4a controlled experiment settings."""
+    """Load controlled experiment settings."""
     split_raw = _require_mapping(raw, "split")
     train_raw = _require_mapping(raw, "train")
     model_raw = _require_mapping(raw, "model")
@@ -827,6 +840,7 @@ def _load_experiment(raw: Mapping[str, Any], *, project_root: Path) -> Experimen
             class_weighting=str(train_raw.get("class_weighting", "balanced")),
             early_stopping_patience=patience,
             checkpoint_dir=checkpoint_dir,
+            block_size=int(train_raw.get("block_size", 4)),
         ),
         model=ModelSettings(
             in_channels=int(model_raw.get("in_channels", 1)),
@@ -865,7 +879,11 @@ def load_settings(config_path: Path | str, *, project_root: Path | None = None) 
     enc_raw = _require_mapping(raw, "encodings")
     exp_raw = _require_mapping(raw, "experiment")
 
-    data_root_value = acq_raw.get("data_root", "D:/SleepEDFX")
+    # Precedence: SLEEP_EDF_ROOT env var > config file > built-in default.
+    # The env override keeps the repo portable without editing tracked config.
+    data_root_value = os.environ.get(
+        "SLEEP_EDF_ROOT", acq_raw.get("data_root", DEFAULT_DATA_ROOT)
+    )
     acquisition = AcquisitionSettings(
         data_root=_as_path(str(data_root_value), base=project_root),
         preload=bool(acq_raw.get("preload", False)),
