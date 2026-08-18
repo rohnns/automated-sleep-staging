@@ -26,6 +26,9 @@ artifacts/cache/
 # Offline analysis artifacts (legacy location)
 analysis/outputs/
 
+# Artifacts
+artifacts/
+
 # Generated outputs
 outputs/checkpoints/
 outputs/predictions/
