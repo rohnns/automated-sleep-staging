@@ -1,4 +1,4 @@
-# Production pipeline amplitude rejection QC report
+# Production pipeline amplitude rejection report
 
 This report was generated from the **production preprocessing pipeline** using `build_default_pipeline(...)`, `preprocess_recording(...)` semantics, `AmplitudeEpochRejector`, and `state.extras["amplitude_reject"]`.
 
