@@ -26,9 +26,6 @@ artifacts/cache/
 # Offline analysis artifacts (legacy location)
 analysis/outputs/
 
-# Artifacts
-artifacts/
-
 # Generated outputs
 outputs/checkpoints/
 outputs/predictions/
@@ -40,6 +37,7 @@ outputs/classical_baseline/
 models/
 artifacts/predictions/
 artifacts/figures/
+artifacts/reports
 
 # Keep phase4 outputs tracked (they're committed artifacts)
 !outputs/phase4_outputs/
