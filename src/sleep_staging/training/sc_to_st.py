@@ -48,7 +48,9 @@ from sleep_staging.evaluation.output import (
     EpochPredictionRecord,
     build_epoch_predictions,
     plot_hypnogram,
+    plot_loss_curves,
     save_predictions_csv,
+    save_training_history,
 )
 from sleep_staging.models.factory import build_baseline_model
 from sleep_staging.representations.types import EncodedDatasetCollection
@@ -520,6 +522,30 @@ def run_primary_experiment(
             ckpt_target = model_dir / "best_model.pt"
             ckpt_target.write_bytes(Path(train_result.checkpoint_path).read_bytes())
         pred_dir, rep_dir, fig_dir = _artifact_paths(model_dir, rep)
+
+        # Persist the training dynamics the trainer already tracks, so
+        # train-vs-validation behaviour (and the overfitting gap) is auditable
+        # after the run instead of living only in stdout. Purely additive --
+        # nothing here feeds back into training or metrics.
+        loss_curve_path = fig_dir / f"{rep}_loss_curves.png"
+        history_path = rep_dir / f"{rep}_training_history.json"
+        if train_result.history:
+            save_training_history(
+                train_result.history, history_path, best_epoch=train_result.best_epoch
+            )
+            plot_loss_curves(
+                train_result.history,
+                loss_curve_path,
+                title=f"{rep} — train vs validation loss (SC train/validation)",
+                best_epoch=train_result.best_epoch,
+            )
+            logger.info(
+                "[%s] wrote loss curves -> %s (best epoch=%d)",
+                rep,
+                loss_curve_path,
+                train_result.best_epoch,
+            )
+
         # save predictions and metrics using existing output helpers
         if train_result.test_metrics is not None:
             onsets, y_true, y_pred, pred_records = _predict_epoch_dataset(model_impl, test_ds, recipe=recipe, device=device)
@@ -538,6 +564,10 @@ def run_primary_experiment(
             "checkpoint_path": str(train_result.checkpoint_path) if train_result.checkpoint_path else None,
             "test_metrics": None if train_result.test_metrics is None else train_result.test_metrics.as_dict(),
             "device": train_result.device,
+            "loss_curve_path": str(loss_curve_path) if train_result.history else None,
+            "training_history_path": str(history_path) if train_result.history else None,
+            "best_epoch": train_result.best_epoch,
+            "stopped_early": train_result.stopped_early,
         }
         # Release this representation's data before the next one starts;
         # see build_primary_collections's docstring for why this matters

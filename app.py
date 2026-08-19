@@ -7,7 +7,7 @@ visualize one held-out test recording at a time. It never trains or refits.
 Artifact roots, in priority order:
 
 ``artifacts/predictions/sc_to_st/``  primary, written by ``main.py``
-``outputs/phase4_outputs/``          legacy per-recording whole-night exports
+``outputs/model_outputs/``           legacy per-recording whole-night exports
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from sleep_staging.preprocessing.pipeline import preprocess_recording
 PROJECT_ROOT = Path(__file__).resolve().parent
 DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "default.yaml"
 PRIMARY_OUTPUT_ROOT = PROJECT_ROOT / "artifacts" / "predictions" / "sc_to_st"
-LEGACY_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "phase4_outputs"
+LEGACY_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "model_outputs"
 #: Roots searched for artifacts, in priority order. Referenced in user-facing
 #: messages so the reader can see exactly where the app looked.
 OUTPUT_ROOTS = (PRIMARY_OUTPUT_ROOT, LEGACY_OUTPUT_ROOT)
@@ -357,6 +357,11 @@ st.table(
 )
 
 st.markdown("### Montage / 10-20 electrode-position visualization")
+st.caption(
+    "Illustrative schematic of the recorded bipolar derivations; not an MNE scalp "
+    "montage and not a true topographic map. Electrode positions are drawn for "
+    "orientation only — no digitized coordinates exist for these derivations."
+)
 st.pyplot(_plot_10_20_montage(recording), clear_figure=True)
 
 st.markdown("### Selected 30-second epoch viewer")
@@ -380,11 +385,66 @@ ax.set_title("Epoch PSD")
 ax.legend(fontsize=8)
 st.pyplot(fig, clear_figure=True)
 
+st.markdown("### PSD for selected sleep stage")
+st.caption(
+    "Aggregate spectrum across every expert-scored epoch of the chosen stage in this "
+    "recording. Welch PSD is computed per 30 s epoch, then averaged across epochs "
+    "(mean of per-epoch PSDs) before conversion to dB."
+)
+
+stage_choice = st.selectbox("Sleep stage", list(STAGE_NAMES), index=2, key="stage_psd")
+stage_idx = STAGE_NAMES.index(stage_choice)
+stage_epochs = [i for i, lab in enumerate(y_true) if int(lab) == stage_idx]
+
+if not stage_epochs:
+    st.info(
+        f"No expert-scored **{stage_choice}** epochs in this recording, so no stage-level "
+        "PSD can be computed. Pick another stage."
+    )
+else:
+    sfreq = recording.sampling_frequency
+    n_use = min(len(stage_epochs), 200)  # cap work; spectra converge well before this
+    used = stage_epochs[:n_use]
+    stack = []
+    for ei in used:
+        a = int(round(ei * 30.0 * sfreq))
+        b = int(round((ei + 1) * 30.0 * sfreq))
+        seg = recording.raw.get_data(start=a, stop=b)
+        if seg.shape[1] == 0:
+            continue
+        p, f_ax = psd_array_welch(seg, sfreq=sfreq, fmin=0.5, fmax=30.0, verbose=False)
+        stack.append(p)
+
+    if not stack:
+        st.info(f"Could not extract signal for the selected {stage_choice} epochs.")
+    else:
+        mean_psd = np.mean(np.stack(stack, axis=0), axis=0)
+        fig_s, ax_s = plt.subplots(figsize=(10, 4), constrained_layout=True)
+        for ch_name, row in zip(recording.raw.ch_names, mean_psd, strict=True):
+            ax_s.plot(f_ax, 10 * np.log10(np.asarray(row) + 1e-20), label=ch_name)
+        ax_s.set_xlabel("Frequency (Hz)")
+        ax_s.set_ylabel("Power (dB)")
+        ax_s.set_title(
+            f"{stage_choice} — mean PSD over {len(stack)} epoch(s)"
+            + (f" (of {len(stage_epochs)} scored)" if len(stack) < len(stage_epochs) else "")
+        )
+        ax_s.legend(fontsize=8)
+        ax_s.grid(True, alpha=0.25)
+        st.pyplot(fig_s, clear_figure=True)
+        st.caption(
+            f"{len(stack)} of {len(stage_epochs)} expert-scored {stage_choice} epochs used "
+            f"(capped at {n_use} for responsiveness)."
+        )
+
 st.markdown("### Topographic map")
 st.info(
-    "Topographic map is not shown because Sleep-EDF records only three channels "
-    "(Fpz-Cz, Pz-Oz, horizontal EOG) as bipolar derivations. That is not enough spatial "
-    "coverage for a scientifically meaningful scalp topomap."
+    "**Not shown — dataset/channel limitation, not a missing feature.** A scalp topomap "
+    "interpolates power across many electrodes at known 10-20 positions. Sleep-EDF provides "
+    "only two bipolar EEG derivations (Fpz-Cz, Pz-Oz) plus one horizontal EOG. A bipolar "
+    "derivation measures a *difference* between two sites and has no single scalp coordinate, "
+    "so there is nothing valid to interpolate over. Rendering one would require inventing "
+    "electrode positions and fabricating spatial structure the recording does not contain, "
+    "so it is deliberately omitted rather than faked."
 )
 
 st.caption(f"Artifact source: {selected.root}")

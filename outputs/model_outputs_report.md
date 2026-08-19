@@ -149,9 +149,9 @@ Normalized confusion matrix:
 
 ## Exported output artifacts
 For each held-out test PSG, outputs were generated under:
-- `outputs/phase4_outputs/<recording_stem>/raw/`
-- `outputs/phase4_outputs/<recording_stem>/bandpower/`
-- `outputs/phase4_outputs/<recording_stem>/time_frequency/`
+- `outputs/model_outputs/<recording_stem>/raw/`
+- `outputs/model_outputs/<recording_stem>/bandpower/`
+- `outputs/model_outputs/<recording_stem>/time_frequency/`
 
 Each contains:
 - `predictions.csv`
@@ -159,4 +159,4 @@ Each contains:
 - `summary.json`
 
 Top-level:
-- `outputs/phase4_outputs/manifest.json`
+- `outputs/model_outputs/manifest.json`

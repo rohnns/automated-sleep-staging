@@ -146,7 +146,7 @@ def main() -> None:
     }
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    out_root = Path("outputs") / "phase4_outputs"
+    out_root = Path("outputs") / "model_outputs"
     out_root.mkdir(parents=True, exist_ok=True)
 
     manifest = {

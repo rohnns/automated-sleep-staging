@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -163,3 +164,84 @@ def _plot_stage_track(ax: Axes, onsets: np.ndarray, labels: np.ndarray, *, label
     if xranges:
         ax.broken_barh(xranges, (y_offset, 0.12), facecolors=colors)
     ax.text(0.0, y_offset + 0.05, label, va="center", ha="left", fontsize=9)
+
+
+def save_training_history(
+    history: Iterable[dict[str, float]],
+    out_path: Path,
+    *,
+    best_epoch: int | None = None,
+) -> Path:
+    """Persist the per-epoch training history as JSON.
+
+    ``train_baseline`` already tracks ``train_loss``, ``val_loss``,
+    ``val_macro_f1`` and an explicit ``loss_gap_train_minus_val`` overfitting
+    signal per epoch, but historically kept them only in memory. Writing them
+    out makes the training dynamics auditable after the fact, and is the
+    machine-readable companion to :func:`plot_loss_curves`.
+    """
+    rows = [dict(row) for row in history]
+    payload: dict[str, object] = {"best_epoch": best_epoch, "epochs": rows}
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return out_path
+
+
+def plot_loss_curves(
+    history: Iterable[dict[str, float]],
+    out_path: Path,
+    *,
+    title: str,
+    best_epoch: int | None = None,
+) -> Path:
+    """Plot train vs validation loss per epoch, with the overfitting gap.
+
+    Top panel: train and validation loss on shared axes -- the two curves
+    separating is the visual signature of overfitting. Bottom panel: the
+    signed ``train_loss - val_loss`` gap the trainer already records, so the
+    same information is readable as a single trend line.
+
+    ``best_epoch`` (the epoch whose validation macro-F1 was selected as the
+    checkpoint) is marked on both panels, since that is the model actually
+    evaluated on the test cohort -- not the final epoch.
+    """
+    rows = [dict(row) for row in history]
+    if not rows:
+        raise ValueError("history is empty; nothing to plot")
+
+    epochs = [float(r["epoch"]) for r in rows]
+    train = [float(r["train_loss"]) for r in rows]
+    val = [float(r["val_loss"]) for r in rows]
+    gap = [float(r.get("loss_gap_train_minus_val", t - v)) for r, t, v in zip(rows, train, val)]
+
+    fig, (ax_loss, ax_gap) = plt.subplots(
+        2, 1, figsize=(9, 6), sharex=True, height_ratios=[3, 1], constrained_layout=True
+    )
+
+    ax_loss.plot(epochs, train, marker="o", ms=3, lw=1.6, color="#377eb8", label="Train loss")
+    ax_loss.plot(epochs, val, marker="o", ms=3, lw=1.6, color="#e41a1c", label="Validation loss")
+    ax_loss.set_ylabel("Cross-entropy loss")
+    ax_loss.set_title(title)
+    ax_loss.grid(True, alpha=0.25)
+
+    ax_gap.axhline(0.0, color="#666666", lw=1.0)
+    ax_gap.plot(epochs, gap, marker="o", ms=3, lw=1.4, color="#4daf4a")
+    ax_gap.set_ylabel("train − val")
+    ax_gap.set_xlabel("Epoch")
+    ax_gap.grid(True, alpha=0.25)
+
+    if best_epoch is not None and best_epoch >= 0:
+        for ax in (ax_loss, ax_gap):
+            ax.axvline(
+                float(best_epoch),
+                color="#984ea3",
+                ls="--",
+                lw=1.3,
+                label="Best val macro-F1 (checkpoint)" if ax is ax_loss else None,
+            )
+
+    ax_loss.legend(loc="upper right", fontsize=9)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    return out_path

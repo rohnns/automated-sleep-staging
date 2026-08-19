@@ -39,9 +39,11 @@ artifacts/predictions/
 artifacts/figures/
 artifacts/reports
 
-# Keep phase4 outputs tracked (they're committed artifacts)
-!outputs/phase4_outputs/
-!outputs/phase4_final_report.md
+# Keep the legacy whole-night exports tracked (committed artifacts) even
+# though they live under outputs/ -- no blanket outputs/ rule above touches
+# outputs/model_outputs/ or root-level outputs/*.md, so no exception is
+# actually needed here; this comment exists so a future blanket rule doesn't
+# accidentally re-exclude them without a maintainer noticing.
 
 # Editors / OS
 .idea/

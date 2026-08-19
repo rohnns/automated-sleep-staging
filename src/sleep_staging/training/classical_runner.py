@@ -29,7 +29,7 @@ DEFAULT_CONFIG = PROJECT_ROOT / "configs" / "default.yaml"
 OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "classical_baseline"
 CACHE_ROOT = OUTPUT_ROOT / "cache"
 RESULT_PATH = OUTPUT_ROOT / "bandpower_logistic_regression.json"
-MANIFEST_PATH = PROJECT_ROOT / "outputs" / "phase4_outputs" / "manifest.json"
+MANIFEST_PATH = PROJECT_ROOT / "outputs" / "model_outputs" / "manifest.json"
 CACHE_FORMAT_VERSION = 1
 
 
