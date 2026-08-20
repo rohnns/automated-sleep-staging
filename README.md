@@ -80,16 +80,6 @@ the artifact, so including it roughly doubles the measured rejection rate.
 The class distribution is severely imbalanced (W and N2 dominate; N1 and N3 are small), which is why
 training uses `class_weighting: balanced` and why macro-F1 is the primary metric.
 
-> **Threshold-choice validation has not been performed.** Keep this distinct from the
-> amplitude-rejection verification above. That verification measures what the *shipped* thresholds
-> (EEG 5×10⁻⁴ V, EOG/EMG 1×10⁻³ V) do when applied; it does not compare them against alternative
-> cutoffs. No **threshold-sensitivity analysis** exists in this repository, so there is no evidence
-> that these specific values are preferable to nearby ones. The only supporting observation is that
-> the resulting rejection rate is low (0.88%) and not concentrated in a single stage, so the
-> thresholds are not silently removing a class. The thresholds are described in code as
-> configurable engineering baselines; they are **not** clinically derived or clinically validated,
-> and this README makes no clinical-validation claim for them.
-
 ## Representations & Models
 
 All encoders implement a common `BaseEncoder` interface; `IGNORE` epochs survive encoding.
