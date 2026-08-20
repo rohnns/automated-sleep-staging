@@ -89,7 +89,7 @@ All encoders implement a common `BaseEncoder` interface; `IGNORE` epochs survive
 | **Raw** | `RawSignalEncoder` → `(N, C, 3000)` | Pass-through 30 s @ 100 Hz, `float32`; no encoder-level scaling | `RawCNN1D` — 3× (Conv1d → ReLU → MaxPool1d), AdaptiveAvgPool1d, Linear(64→5) |
 | **Band-power** | `BandPowerEncoder` → `(N, C, 10)` | 5 bands (δ, θ, α, σ, β) × (log-absolute + relative power). Welch: `nperseg=400`, `noverlap=200`, `nfft=400`, hamming, `average=median`. `log(power + 1e-10)`. No gamma (signal is ≤30 Hz upstream) | `BandPowerMLP` — Flatten → Linear(64) → ReLU → Dropout(0.2) → Linear(5) |
 | **Time-frequency** | `TimeFrequencyEncoder` (STFT backend) → `(N, C, F, T)` | `scipy.signal.stft`, `n_fft=win_length=256` (Δf ≈ 0.39 Hz), `hop_length=100`, Hann, `fmin=0.5`, `fmax=30.0`, log-power | `STFTCNN2D` — 3× (Conv2d → ReLU → MaxPool2d), AdaptiveAvgPool2d, Linear(64→5) |
-| **Band-power (classical)** | Flattened band-power features | `max_iter=1000` | scikit-learn `LogisticRegression` |
+| **Classical (band-power preproc)** | Flattened band-power features | `max_iter=1000` | scikit-learn `LogisticRegression` |
 
 The band-power branch is an MLP (and the classical baseline a linear model) by design: band-power
 features are a compact, non-sequential per-band summary with no spatial or temporal locality for a
