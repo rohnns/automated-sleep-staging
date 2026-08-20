@@ -258,33 +258,6 @@ bit-identical on rerun. The two committed exceptions, `artifacts/reports/sc_to_s
 and `.../classical/classical_metrics.json`, are the authoritative record of the SC→ST results and
 should not be overwritten by a rerun.
 
-## Demo
-
-> **Status: walkthrough documented; demo artifact not included.** No recording or screencast is
-> committed. If the task brief requires a demo artifact, it must be supplied separately.
-
-A ~10-minute walkthrough running entirely from committed artifacts — no retraining, nothing
-overwritten. Set `SLEEP_EDF_ROOT` first (the dashboard reads raw EDF for the signal and PSD panels).
-
-1. **Repository and protocol** — the layered pipeline (`acquisition → preprocessing →
-   representations → models → training → evaluation`) and SC→ST: train/validate on Sleep Cassette,
-   evaluate once on Sleep Telemetry.
-2. **Primary results** — the [SC→ST table](#results). Lead with macro-F1 (class imbalance), with
-   accuracy and κ as complementary; note the classical baseline beats all three neural models, and
-   that every κ sits below the 0.76–0.83 human inter-rater band.
-3. **Dashboard** — `py -3.13 -m streamlit run app.py`; pick a recording, then switch between `raw`,
-   `bandpower`, and `time_frequency` to compare representations on the same night.
-4. **Raw EEG browser** — scroll to a clear N3 epoch (high-amplitude slow waves) versus a REM epoch.
-5. **Hypnogram + confusion matrix** — show where the model tracks the expert and where it breaks
-   down; inspect the N1 row to show where the model confuses this stage.
-6. **Sleep statistics** — expert vs. predicted total sleep time, efficiency, latencies, time in stage.
-7. **Stage-level PSD** — select N3 and then REM; the δ-band power difference is visible directly in
-   the spectrum, illustrating a physiological distinction associated with these stages.
-8. **Spatial power distribution** — same stage, δ band: frontal (Fpz-Cz) versus posterior (Pz-Oz)
-   power as discrete markers. Note explicitly that nothing is interpolated between them, and why
-   an interpolated topomap is not shown.
-
-Optionally close on the dataset limits (no scalp topomap, illustrative schematic) and the ICA audit.
 
 ## Limitations & Task Compliance
 
