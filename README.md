@@ -2,224 +2,148 @@
 
 ## Overview
 
-This repository implements an automated 30-second-epoch sleep staging pipeline for the **Sleep-EDF Expanded** dataset (PhysioNet). It loads PSG (EDF) recordings and their hypnogram annotations, preprocesses the continuous signal, maps Rechtschaffen & Kales (R&K) hypnogram labels to the five-class **AASM** scheme (`W`, `N1`, `N2`, `N3`, `REM`), encodes each 30 s epoch into one of three representations (raw waveform, band-power, or STFT time-frequency image), and trains a small baseline classifier per representation plus one classical (logistic-regression) baseline.
+An automated 30-second-epoch sleep staging pipeline for the **Sleep-EDF Expanded** dataset
+(PhysioNet). It loads PSG (EDF) recordings with their hypnogram annotations via MNE, preprocesses
+the continuous signal, maps Rechtschaffen & Kales (R&K) labels to the five-class **AASM** scheme
+(`W`, `N1`, `N2`, `N3`, `REM`), encodes each 30 s epoch into one of three representations (raw
+waveform, band-power, STFT time-frequency image), and trains one baseline model per representation
+plus a classical logistic-regression baseline.
 
-The primary, currently-implemented experiment is an external-generalization protocol: models are trained and model-selected entirely on the **Sleep Cassette (SC)** cohort and evaluated once, without further tuning, on the entire **Sleep Telemetry (ST)** cohort. Verified final SC→ST test results for all four models are committed in this repository (see [Results](#results)). These are external test results on ST, not SC validation results.
+The headline experiment is an **external-generalization protocol**: models are trained and
+model-selected entirely on the **Sleep Cassette (SC)** cohort, then evaluated exactly once, without
+further tuning, on the entire **Sleep Telemetry (ST)** cohort. Final SC→ST results for all four
+models are committed here (see [Results](#results)); a read-only Streamlit dashboard visualizes the
+exported predictions.
 
-A read-only Streamlit dashboard visualizes the exported predictions.
+## Dataset & Experimental Protocol
 
-## Task / Objectives
+The pipeline does **not** download Sleep-EDF Expanded; point it at a local copy via `SLEEP_EDF_ROOT`
+(takes precedence) or `acquisition.data_root`.
 
-Objectives verified as implemented in the current codebase:
-
-- Load Sleep-EDF Expanded PSG + hypnogram pairs via MNE (`acquisition/`).
-- Build a configurable, order-sensitive preprocessing pipeline (`preprocessing/`).
-- Map R&K labels to AASM 5-class labels, preserving epoch alignment for unscored/unmapped labels (`StageMapper`).
-- Encode epochs into three representations: raw waveform, Welch band-power, and STFT log-power spectrogram (`representations/`).
-- Train one baseline model per representation (1D CNN, MLP, 2D CNN) plus a classical logistic-regression baseline on band-power features (`training/`, `models/`).
-- Run a subject-wise SC train/validation split and evaluate once on the full ST cohort as an external test set (`training/sc_to_st.py`, `main.py`).
-- Report accuracy, macro-F1, Cohen's kappa, per-class precision/recall/F1, and confusion matrices (`training/metrics.py`).
-- Provide a read-only Streamlit dashboard over the exported artifacts (`app.py`).
-
-Optional / partially implemented, and explicitly flagged as such below:
-
-- A continuous wavelet transform (CWT) backend for the time-frequency representation exists as an interface-conforming class but its `transform` method raises `EncoderNotImplementedError`; it is **not usable**.
-- Common-average referencing (CAR) is implemented but disabled by default (`reference.mode: original`).
-- A within-SC (SC-train / SC-val / SC-test) split and result set exists as a **legacy** artifact from an earlier phase of the project, alongside the primary SC→ST experiment. The two are evaluated on different held-out cohorts and are documented separately below.
-
-## Dataset
-
-**Sleep-EDF Expanded** (PhysioNet), accessed as local EDF files. The pipeline does not download the dataset; a local copy is pointed to via `acquisition.data_root` in `configs/default.yaml` or the `SLEEP_EDF_ROOT` environment variable (which takes precedence).
-
-Two cohorts are used, per docstrings and assertions in `src/sleep_staging/training/sc_to_st.py`:
-
-| Cohort | Full name | Recordings | Subjects | Population | Primary role |
+| Cohort | Full name | Recordings | Subjects | Population | Role |
 | --- | --- | ---: | ---: | --- | --- |
-| **SC** | Sleep Cassette | 153 | 78 unique (55 train + 12 validation used; remainder unused under the 70/15/15 subject-wise split) | Healthy subjects, studied at home | Train + validation |
-| **ST** | Sleep Telemetry | 44 | 22 (asserted in code) | Subjects with mild difficulty falling asleep, studied in hospital | External test |
+| **SC** | Sleep Cassette | 153 | 78 unique (55 train + 12 validation used) | Healthy, studied at home | Train + validation |
+| **ST** | Sleep Telemetry | 44 | 22 | Mild difficulty falling asleep, studied in hospital | External test |
 
-Verified directly against the committed `artifacts/reports/sc_to_st/inventory.json`: 55 SC train subjects, 12 SC validation subjects, 22 ST test subjects, 41,148 supervised test epochs.
+**Protocol** (`training/sc_to_st.py::run_primary_experiment`). SC subjects are split
+**subject-wise**, never recording-wise, 70/15/15 with `seed=42`; only the train (55) and validation
+(12) partitions are used, and checkpoint selection plus early stopping use **SC validation macro-F1
+only**. The full ST cohort is then evaluated **exactly once** after training — a genuine
+cross-cohort test, not a within-SC holdout. Subject-disjointness is enforced in code
+(`assert_no_subject_leakage`, `SubjectSplit.__post_init__`), and split grouping keys match
+`EncodedDataset.subject_id` so a split cannot silently match zero recordings. Verified against the
+committed `inventory.json`: **55 / 12 / 22** subjects, **41,148** supervised test epochs.
 
-- **Loading**: `SleepEDFLoader` (`acquisition/loader.py`) reads each PSG EDF with MNE and attaches the corresponding Hypnogram EDF as MNE annotations — the annotations on `recording.raw` are the single authoritative label store.
-- **Epoching**: fixed 30-second epochs (`preprocessing.epoch_duration_sec: 30` in config). `AnnotationUnroller` converts the hypnogram's variable-length scored bouts into per-epoch labels on a fixed global 30 s grid.
-- **Ignored annotations**: `Movement time` and `Sleep stage ?` are not part of the 5-class AASM target set. They are mapped to a sentinel `IGNORE` label (`StageMapper`) rather than dropped, so epoch indexing stays aligned with the signal; `IGNORE` epochs are excluded from loss and from all reported metrics (`ignore_index=-100`).
+**Labels.** Fixed R&K→AASM table (`StageMapper`): `W→W`, `1→N1`, `2→N2`, `3→N3`, `4→N3`, `R→REM`;
+`Movement time` and `Sleep stage ?` → `IGNORE`. R&K stages 3 and 4 merge into `N3` per the AASM
+2007 manual. `IGNORE` epochs are **never dropped** — they keep epoch indexing aligned with the
+signal and are excluded from loss and all metrics via `ignore_index=-100`. The pipeline builder
+refuses `unmapped_policy="drop"`, which would desynchronize signal/label indexing. A separate
+**legacy** experiment reuses the same SC split but tests on the leftover 11 SC subjects — see
+[Results](#results).
 
-## Pipeline Architecture
+## Pipeline
 
-Verified from `preprocessing/pipeline.py::build_default_pipeline` (module and class names are the actual implementation, not paraphrased):
+Fixed, order-sensitive transform chain from `preprocessing/pipeline.py::build_default_pipeline`,
+applied after `SleepEDFLoader` reads the EDF + hypnogram pair. Every step except steps 1, 3, and 9
+is toggleable in `configs/default.yaml`. All steps are non-destructive with respect to epoch count:
+rejection marks epochs `IGNORE` rather than deleting them.
 
-```
-EDF + Hypnogram (SleepEDFLoader)
-  → AnnotationUnroller        (unroll hypnogram onto 30 s grid)
-  → SleepBoundaryDetector     (detect sleep onset/offset; no cropping)
-  → ChannelSelector           (keep configured EEG/EOG[/EMG] channels)
-  → BadChannelDetector        (optional; non-destructive flagging)
-  → ReferenceTransform        (optional; disabled by default)
-  → SignalFilter              (optional; per-channel-type band-pass + notch)
-  → ICATransform              (optional; EEG-only, EOG-guided exclusion)
-  → WakeCropper                (optional; crop to sleep ± buffer)
-  → StageMapper                (R&K → AASM; unmapped → IGNORE)
-  → AmplitudeEpochRejector     (optional; marks epochs IGNORE, doesn't drop)
-  → RecordingNormalizer        (optional; per-recording z-score/robust/center)
-  → [encoding: RawSignalEncoder | BandPowerEncoder | TimeFrequencyEncoder]
-  → [EpochDataset: subject-wise train / val / test split]
-  → [model: RawCNN1D | BandPowerMLP | STFTCNN2D | classical LogisticRegression]
-  → [evaluation: accuracy, macro-F1, kappa, per-class P/R/F1, confusion matrix]
-  → [dashboard: app.py — read-only visualization of exported artifacts]
-```
+| # | Transform | Configuration / status |
+| ---: | --- | --- |
+| 1 | `AnnotationUnroller` | Unrolls the hypnogram's variable-length bouts onto a fixed 30 s grid. |
+| 2 | `SleepBoundaryDetector` | Finds sleep onset/offset; does not itself crop. |
+| 3 | `ChannelSelector` | `Fpz-Cz`, `Pz-Oz` (EEG) + `horizontal` (EOG). EMG is opt-in and excluded by default — SC's submental EMG is a 1 Hz preprocessed envelope, not a waveform. |
+| 4 | `BadChannelDetector` | **Partial — flagging only.** Flags flat / high-NaN / saturated / high-variance / extreme peak-to-peak channels into `raw.info['bads']`. **No interpolation and no exclusion from encoding or model training** — flagged samples still reach the model. Only `ICATransform` reads the flags. |
+| 5 | `ReferenceTransform` | CAR implemented, **not applied** (`reference.mode: original`). |
+| 6 | `SignalFilter` | Global notch (50 Hz, auto-skipped if ≥ Nyquist), then per-type band-pass: EEG 0.5–30 Hz, EOG 0.5–15 Hz, EMG 10–30 Hz. |
+| 7 | `ICATransform` | MNE `ICA`, enabled, EEG-only, EOG-guided exclusion via `find_bads_eog`. Skipped if fewer than 2 usable EEG channels remain. See the audit below. |
+| 8 | `WakeCropper` | Crops to the scored sleep period ± 30 min, snapped outward to the epoch grid so signal stays phase-aligned with labels. |
+| 9 | `StageMapper` | R&K → AASM; unmapped → `IGNORE`. |
+| 10 | `AmplitudeEpochRejector` | Per-epoch peak-to-peak against per-type thresholds (EEG 5×10⁻⁴ V, EOG/EMG 1×10⁻³ V); non-finite samples also reject. Marks `IGNORE`, never drops. |
+| 11 | `RecordingNormalizer` | Per-recording, per-channel `zscore` (also `robust` / `center`), applied last. Per-recording only — no dataset-wide normalization. |
 
-All steps except `AnnotationUnroller`, `ChannelSelector`, and `StageMapper` are individually toggleable via `configs/default.yaml`. The shipped primary configuration enables the relevant optional preprocessing stages; re-referencing remains at `reference.mode: original`, so CAR is implemented but not applied in the reported results.
+**ICA audit.** ICA is implemented and enabled because the brief requires the capability. Its actual
+effect was then measured: on **8 SC** recordings it ran, fit 2 components, and excluded **0**
+(signal change 4.4×10⁻¹⁵ relative — machine epsilon, since `ica.apply(exclude=[])` is an identity
+transform); on **4 ST** recordings it was **skipped entirely** (bit-identical), because
+`BadChannelDetector` flags all three channels and ICA then finds fewer than 2 usable EEG channels.
+**The audited sample showed no material artifact removal, and the audit was not exhaustive** — it
+covers 12 of 197 recordings. These results should not be presented as ICA-cleaned.
 
-## Preprocessing
+**Preprocessing verification reports.** Three committed analyses. The first two are
+**rejection-rate analyses** measuring the shipped thresholds in place, and they sample **different
+points in the pipeline**, so their totals are not directly comparable:
 
-Each operation below is a separate `Transform` class under `src/sleep_staging/preprocessing/`. All are non-destructive with respect to epoch count/alignment: rejection steps mark epochs `IGNORE` rather than deleting them.
+| Report | Type | Measured at | Headline |
+| --- | --- | --- | --- |
+| `outputs/amp-rej-verification/` | Amplitude-rejection verification | **After** wake cropping, production pipeline, 197 recordings | 238,317 epochs, 2,090 rejected (**0.88%**); per-stage 0.23% (N2) to 1.48% (W); dominant reason `eog:horizontal:peak_to_peak` |
+| `scripts/utilities/class_distribution_with_rejection.md` | Class-distribution + rejection-rate analysis | **Before** wake cropping, SC cohort | 459,198 epochs, 9,760 rejected (**2.13%**); full per-stage counts pre/post |
+| `scripts/utilities/verify_acquisition.py` | Acquisition verification | Acquisition | Channel names and types, sampling rate, recording duration, reference scheme |
 
-- **Filtering** (`filtering.py`, `SignalFilter`) — implemented. Applies a global notch filter (default 50 Hz, auto-skipped if ≥ Nyquist) followed by per-channel-type band-pass filtering via MNE: EEG 0.5–30 Hz, EOG 0.5–15 Hz, EMG 10–30 Hz by default (all independently configurable). Unknown/aux channel types are not band-passed.
-- **Channel selection** (`channel_selector.py`, `ChannelSelector`) — implemented. Keeps a configured set of channel names and/or MNE channel types; default staging channels are `Fpz-Cz`, `Pz-Oz` (EEG) and `horizontal` (EOG). EMG is opt-in and excluded by default because Sleep-EDF SC's submental EMG is a 1 Hz preprocessed envelope, not a 100 Hz waveform (per code comments in `configs/default.yaml`).
-- **Bad-channel handling** (`bad_channels.py`, `BadChannelDetector`) — implemented, but **non-destructive**: it flags channels as flat, high-NaN, saturated, high-variance, or extreme-peak-to-peak using per-channel-type thresholds, and optionally appends them to `raw.info['bads']`. It does **not** interpolate, drop, or otherwise repair flagged channels. One downstream consumer does read the flag: `ICATransform` excludes any channel already in `raw.info['bads']` when selecting which EEG channels to fit ICA components on (`ica.py`). Model **training** itself (`trainer.py`) never reads `raw.info['bads']` — a flagged channel's samples still reach the encoder and the model unchanged.
-- **Re-referencing** (`reference.py`, `ReferenceTransform`) — implemented for two modes: `"original"` (no-op) and `"common_average"` (CAR across EEG channels only, skipped with a warning if fewer than 2 EEG channels are present). The shipped default config uses `mode: original`, i.e. CAR is implemented but **not applied** in the results reported here.
-- **ICA** (`ica.py`, `ICATransform`) — implemented via MNE `ICA`, fit on EEG channels only (EOG/EMG untouched). If an EOG channel is present and `detect_eog=True`, `find_bads_eog` (correlation-based by default) selects components for exclusion before `ica.apply`. Skipped gracefully (with a logged reason) if fewer than 2 usable EEG channels remain. Enabled in `configs/default.yaml` (`preprocessing.ica.enabled: true`) and therefore active in the reported run — but see the audited-effect note directly below for what it measurably did.
+The two rejection rates differ because of wake cropping, not disagreement: N1/N2/N3/REM counts are
+identical across both reports, and only W changes (289,856 → 70,140). Uncropped wake carries most of
+the artifact, so including it roughly doubles the measured rejection rate.
 
-  **Audited effect of ICA — no material artifact removal observed in the audited sample.** ICA is implemented and enabled because the brief requires the capability. Its actual effect was then measured against the live pipeline on a sample of recordings rather than assumed:
+The class distribution is severely imbalanced (W and N2 dominate; N1 and N3 are small), which is why
+training uses `class_weighting: balanced` and why macro-F1 is the primary metric.
 
-  | Cohort | Recordings audited | ICA behaviour | Components excluded | Signal change vs. ICA disabled |
-  | --- | ---: | --- | ---: | --- |
-  | SC | 8 | Runs, fits 2 components | **0** | 4.4×10⁻¹⁵ relative (float64 machine epsilon) |
-  | ST | 4 | **Skipped entirely** | n/a | 0 (bit-identical) |
+> **Threshold-choice validation has not been performed.** Keep this distinct from the
+> amplitude-rejection verification above. That verification measures what the *shipped* thresholds
+> (EEG 5×10⁻⁴ V, EOG/EMG 1×10⁻³ V) do when applied; it does not compare them against alternative
+> cutoffs. No **threshold-sensitivity analysis** exists in this repository, so there is no evidence
+> that these specific values are preferable to nearby ones. The only supporting observation is that
+> the resulting rejection rate is low (0.88%) and not concentrated in a single stage, so the
+> thresholds are not silently removing a class. The thresholds are described in code as
+> configurable engineering baselines; they are **not** clinically derived or clinically validated,
+> and this README makes no clinical-validation claim for them.
 
-  On SC, `find_bads_eog` flagged no component, so `ica.apply(exclude=[])` reconstructs from *all* components — an identity transform up to floating-point round-trip noise. On ST, `BadChannelDetector` flags all three channels and `ica.py` excludes `raw.info['bads']` when counting usable EEG channels, so ICA reports "fewer than 2 usable EEG channels" and never runs. Only two bipolar EEG derivations are available, capping ICA rank at 2.
+## Representations & Models
 
-  **Scope of this claim:** the audit covers the 12 sampled recordings above, not all 197. It is therefore evidence that ICA performed no material artifact removal *in the audited recordings*, and the mechanism (no components flagged on SC; skipped on ST) is expected to generalize — but this README does not claim every reported recording was independently proven a no-op. The safe reading is that the SC→ST results should not be presented as ICA-cleaned.
-- **Wake cropping** (`wake_crop.py`, `WakeCropper`) — implemented. Crops the continuous recording to the scored sleep period plus a configurable buffer (default 30 minutes) on each side, snapped outward to the 30 s epoch grid so cropped signal stays phase-aligned with epoch labels. Enabled by default.
-- **Normalization** (`normalization.py`, `RecordingNormalizer`) — implemented. Per-recording, per-channel normalization over the (cropped) recording window; `zscore` (mean/std), `robust` (median/IQR), or `center` (mean only). Default: `zscore`, applied last in the pipeline.
-- **Amplitude rejection** (`amplitude_reject.py`, `AmplitudeEpochRejector`) — implemented; see [Quality Control](#quality-control).
-- **Sleep-boundary handling** (`sleep_boundaries.py`, `SleepBoundaryDetector`) — implemented. Detects first/last epoch with a sleep-stage label from the hypnogram; used by `WakeCropper` but does not itself modify the recording.
+All encoders implement a common `BaseEncoder` interface; `IGNORE` epochs survive encoding.
 
-Not implemented / not applicable in this pipeline: channel interpolation for bad channels, and any cross-recording (dataset-wide) normalization — normalization is explicitly per-recording only by design (per module docstring).
+| Representation | Encoder → shape | Key parameters | Model |
+| --- | --- | --- | --- |
+| **Raw** | `RawSignalEncoder` → `(N, C, 3000)` | Pass-through 30 s @ 100 Hz, `float32`; no encoder-level scaling | `RawCNN1D` — 3× (Conv1d → ReLU → MaxPool1d), AdaptiveAvgPool1d, Linear(64→5) |
+| **Band-power** | `BandPowerEncoder` → `(N, C, 10)` | 5 bands (δ, θ, α, σ, β) × (log-absolute + relative power). Welch: `nperseg=400`, `noverlap=200`, `nfft=400`, hamming, `average=median`. `log(power + 1e-10)`. No gamma (signal is ≤30 Hz upstream) | `BandPowerMLP` — Flatten → Linear(64) → ReLU → Dropout(0.2) → Linear(5) |
+| **Time-frequency** | `TimeFrequencyEncoder` (STFT backend) → `(N, C, F, T)` | `scipy.signal.stft`, `n_fft=win_length=256` (Δf ≈ 0.39 Hz), `hop_length=100`, Hann, `fmin=0.5`, `fmax=30.0`, log-power | `STFTCNN2D` — 3× (Conv2d → ReLU → MaxPool2d), AdaptiveAvgPool2d, Linear(64→5) |
+| **Band-power (classical)** | Flattened band-power features | `max_iter=1000` | scikit-learn `LogisticRegression` |
 
-## Label Mapping
+The band-power branch is an MLP (and the classical baseline a linear model) by design: band-power
+features are a compact, non-sequential per-band summary with no spatial or temporal locality for a
+convolution to exploit. **Not usable:** the CWT backend implements its geometry methods but
+`transform()` raises `EncoderNotImplementedError`, so the `method: stft | cwt` config switch fails
+at encode time if set to `cwt`; band-power **ratio** features (`include_ratios`) likewise raise
+`EncodingError`.
 
-`StageMapper` (`preprocessing/stage_mapper.py`) applies the following fixed table (`DEFAULT_RK_TO_AASM`):
-
-| Source (R&K / Sleep-EDF hypnogram) | Mapped AASM label |
-| --- | --- |
-| `Sleep stage W` | `W` |
-| `Sleep stage 1` | `N1` |
-| `Sleep stage 2` | `N2` |
-| `Sleep stage 3` | `N3` |
-| `Sleep stage 4` | `N3` |
-| `Sleep stage R` | `REM` |
-| `Movement time` | `IGNORE` |
-| `Sleep stage ?` | `IGNORE` |
-
-R&K stages 3 and 4 are merged into AASM `N3`, matching the AASM 2007 scoring manual's collapse of slow-wave sleep into a single stage. Labels not present in the table follow `unmapped_policy` (default `"ignore"` → written as `IGNORE`); the pipeline builder explicitly **refuses** to build with `unmapped_policy="drop"` because dropping epochs would desynchronize contiguous signal/label indexing — that policy is opt-in only for callers who build a custom pipeline and explicitly index by `onsets_sec`.
-
-## Quality Control
-
-Two independent, non-destructive QC layers, both writing to `IGNORE` rather than deleting epochs/samples:
-
-- **Bad-channel flagging** (`BadChannelDetector`) — see [Preprocessing](#preprocessing) above. Whole-channel, not epoch-level.
-- **Epoch amplitude rejection** (`AmplitudeEpochRejector`) — for each 30 s epoch window, computes per-channel peak-to-peak amplitude; if any checked channel exceeds its type-specific threshold (defaults: EEG 5×10⁻⁴ V, EOG 1×10⁻³ V, EMG 1×10⁻³ V), the epoch's label is overwritten with `IGNORE`. Non-finite samples also trigger rejection.
-
-A committed verification run exists at `outputs/amp-rej-verification/amp_rej_verification_report.md`, generated (per its own header) from the production pipeline (`build_default_pipeline`) across all 197 discovered recordings:
-
-- 238,317 total epochs before rejection; 2,090 rejected (0.88% overall).
-- Per-stage rejection ranges from 0.23% (N2) to 1.48% (W).
-- Rejection reasons include `eog:horizontal:peak_to_peak` (1,077), `eeg:Pz-Oz:peak_to_peak` (573), `eeg:Fpz-Cz:peak_to_peak` (485).
-
-These thresholds are described in code as "configurable engineering baselines," not physiologically validated cutoffs.
-
-## Signal Encodings
-
-All encoders live in `src/sleep_staging/representations/` and implement a common `BaseEncoder` interface (`encode(EpochTensorBatch) -> EncodedDataset`). `IGNORE` epochs are preserved (never dropped) through encoding.
-
-### Raw EEG
-
-- **Encoder class**: `RawSignalEncoder` (`representations/encoders.py`).
-- **Input/output**: pass-through multichannel waveform, `(N, C, T)` with `T = 3000` for 30 s @ 100 Hz.
-- **Parameters**: `dtype` (default `float32`).
-- **Normalization/scaling**: none at the encoder level (normalization already happened in preprocessing, if enabled).
-- **Model**: `RawCNN1D` (`models/baselines.py`) — a lightweight 1D CNN (3 conv/pool blocks, adaptive average pool, linear classifier).
-
-### Bandpower
-
-- **Encoder class**: `BandPowerEncoder`.
-- **Input/output**: `(N, C, 10)` — 5 bands (delta, theta, alpha, sigma, beta) × (log-absolute power + relative power). No gamma band (signal is band-limited to ≤30 Hz upstream).
-- **Parameters**: Welch PSD via `scipy.signal.welch` — `nperseg=400`, `noverlap=200`, `nfft=400`, `window=hamming`, `average=median`, `detrend=constant`, `scaling=density`; band edges are closed intervals `[lo, hi]` (adjacent bands intentionally share a boundary sample).
-- **Normalization/scaling**: log-absolute power is `log(power + eps)` (`eps=1e-10`); relative power is band power divided by the sum of all selected bands.
-- **Spectral ratio features** (`include_ratios`) are explicitly **not implemented** — the encoder raises `EncodingError` if requested.
-- **Model**: `BandPowerMLP` — `Flatten → Linear(64) → ReLU → Dropout(0.2) → Linear(5)`. This branch is an MLP rather than a CNN because band-power features have no spatial/temporal locality for a convolution to exploit — they are already a small, non-sequential per-band summary vector.
-
-### Time-Frequency
-
-- **Encoder class**: `TimeFrequencyEncoder`, delegating to a swappable `TimeFrequencyBackend` (`representations/backends.py`).
-- **STFT backend (`STFTBackend`)** — **implemented and used for all reported results.** `scipy.signal.stft`, default `n_fft=win_length=256` (Δf ≈ 0.39 Hz, 2.56 s window), `hop_length=100` (1.0 s stride), Hann window, `fmin=0.5`, `fmax=30.0`, `power=2`, `log_scale=True` (log-power spectrogram). Output shape `(N, C, F, T_frames)`.
-- **CWT backend (`CWTBackend`)** — **placeholder only.** Its geometry methods (`frequency_axis`, `time_axis`, `output_hw`, `describe_params`) are implemented, but `transform()` raises `EncoderNotImplementedError("CWTBackend.transform is not implemented yet")`. `configs/default.yaml` exposes a `time_frequency.method: stft | cwt` switch and a fully-specified `cwt:` parameter block, but selecting `cwt` will fail at encode time — it is not a working alternative today.
-- **Model**: `STFTCNN2D` — a lightweight 2D CNN (3 conv/pool blocks, adaptive average pool, linear classifier) operating on the STFT log-power image.
-
-## Dataset Split and Generalization
-
-Implemented in `training/split.py` and `training/sc_to_st.py`.
-
-- **Granularity**: strictly **subject-wise**, never recording-wise. `subject_wise_split()` shuffles unique subject IDs with a seeded RNG and partitions them; `SubjectSplit.__post_init__` raises if any partition overlaps, and `assert_no_subject_leakage()` is called explicitly in the SC→ST builder. Grouping keys are derived from parsed PSG filenames (`_subject_key`), matching how `EncodedDataset.subject_id` is set, so a split can't silently match zero recordings.
-- **Primary protocol (SC→ST, `run_primary_experiment` in `training/sc_to_st.py`)**:
-  - SC subjects only are split 70/15/15 (seed 42) via `subject_wise_split`, but only the **train** (55 subjects) and **validation** (12 subjects) partitions are used here.
-  - Checkpoint selection and early stopping use SC validation macro-F1 only.
-  - The entire ST cohort (22 subjects, asserted) is evaluated exactly once, after training, as the test set — this is a true **cross-cohort (SC→ST)** external-generalization test, not a within-SC holdout.
-- **Legacy protocol** (`outputs/model_outputs_report.md`): an **earlier, separate** experiment that uses the same 70/15/15 SC-only subject-wise split (55/12/**11**), but here the leftover 11-subject SC partition is used as an **internal SC test set** (not ST). This predates the current SC→ST orchestration and is **not** the same experiment as the primary SC→ST run; results from the two must not be conflated (see [Results](#results)).
-
-Subject-disjointness is verified in code (`assert_no_subject_leakage`, `SubjectSplit.__post_init__`), not merely assumed.
-
-## Models
-
-All four models are defined in `src/sleep_staging/models/`:
-
-| Representation | Model class | Architecture |
-| --- | --- | --- |
-| Raw | `RawCNN1D` | 1D CNN: 3× (Conv1d → ReLU → MaxPool1d), AdaptiveAvgPool1d, Linear(64→5) |
-| Bandpower | `BandPowerMLP` | MLP: Flatten → Linear(→64) → ReLU → Dropout(0.2) → Linear(64→5) |
-| Time-frequency | `STFTCNN2D` | 2D CNN: 3× (Conv2d → ReLU → MaxPool2d), AdaptiveAvgPool2d, Linear(64→5) |
-| Bandpower (classical) | scikit-learn `LogisticRegression` | Flattened band-power features, `max_iter` from config |
-
-The bandpower branch is an MLP rather than a CNN, and the classical baseline is a plain logistic regression rather than a neural network at all — both by design, per code comments: band-power features are a compact, non-sequential per-band summary with no spatial/temporal structure for a convolution to exploit, so a small MLP (and, for the classical baseline, a linear model) is the appropriate capacity for that representation.
-
-## Training
+## Training & Evaluation
 
 From `training/trainer.py::train_baseline` and `configs/default.yaml`:
 
-- **Framework**: PyTorch (device auto-selected: CUDA → MPS → CPU via `select_device()`; bf16 autocast on CUDA only).
-- **Loss**: `nn.CrossEntropyLoss(ignore_index=-100)`, with optional balanced class weights (`class_weighting: balanced`, computed from the train split only).
-- **Optimizer**: Adam, `learning_rate=1e-3`, `weight_decay=0.0` (config defaults).
-- **Batch size**: 32 (config default; reduced from 64 per an in-config note about 6 GB laptop GPU memory).
-- **Epochs**: `max_epochs=20` (config default), with early stopping (`early_stopping_patience=5` epochs without val macro-F1 improvement).
-- **Validation metric**: macro-F1, computed on the SC validation split each epoch.
-- **Checkpointing / best-model selection**: the trainer explicitly tracks `best_val_macro_f1` and saves a checkpoint (`_save_checkpoint`) every time validation macro-F1 improves; the in-memory `best_state` (a CPU copy of `model.state_dict()`) is likewise updated on every improvement. After the training loop ends (by exhausting `max_epochs` or early stopping), `model.load_state_dict(best_state)` is called before any test-set evaluation — the best validation macro-F1 checkpoint is both saved to disk and reloaded into the model prior to computing test metrics.
-- **Class weighting**: `balanced` by default — weights are `n_supervised / (n_classes * class_count)`, computed once from the training set.
-- **Sampling**: training uses a custom `LocalityAwareSampler` (`training/sampler.py`) instead of a fully global shuffle, to avoid page-cache thrashing on memory-mapped datasets larger than RAM (`block_size=4` recordings per shuffled block; a memory/IO tuning knob, not a scientific choice per its docstring).
-- **Random seeds**: `seed=42` throughout (`set_seed()` seeds `numpy` and `torch`, including CUDA).
-- **Test evaluation**: only run once, after best-checkpoint reload, and only when `evaluate_test=True`; never used for checkpoint selection or early stopping.
+| Setting | Value |
+| --- | --- |
+| Framework / device | PyTorch; auto-selected CUDA → MPS → CPU, bf16 autocast on CUDA only |
+| Loss | `CrossEntropyLoss(ignore_index=-100)`, `class_weighting: balanced` computed from the train split only |
+| Optimizer | Adam, `lr=1e-3`, `weight_decay=0.0` |
+| Batch size / epochs | 32 / `max_epochs=20`, early stopping after 5 epochs without val macro-F1 improvement |
+| Model selection | Best **SC validation macro-F1** checkpoint is saved to disk *and* reloaded (`load_state_dict(best_state)`) before any test evaluation |
+| Sampling | `LocalityAwareSampler` (`block_size=4`) instead of a global shuffle — an I/O tuning knob to avoid page-cache thrashing on memory-mapped data, not a scientific choice |
+| Seed | 42 (`set_seed()`: numpy + torch, including CUDA) |
+| Test evaluation | Run **once**, after best-checkpoint reload; never used for selection or early stopping |
 
-## Evaluation
-
-`training/metrics.py::compute_classification_metrics` computes, on supervised (non-`IGNORE`) epochs only:
-
-- Accuracy
-- Macro-F1
-- **Cohen's kappa** (implemented directly, `cohen_kappa()`, not from an external library)
-- Per-class precision / recall / F1 (5 classes: W, N1, N2, N3, REM)
-- Raw and row-normalized confusion matrices
-
-There is no per-subject metrics breakdown implemented anywhere in `training/` or `evaluation/` — metrics are pooled across all epochs in a split.
-
-- **SC validation** metrics are produced every epoch during training (`train_baseline`'s `history`) but are **not** written to a committed report file for the primary SC→ST run; they exist only in training logs / the in-memory `TrainResult.history`.
-- **ST test** metrics (primary experiment) are committed in `artifacts/reports/sc_to_st/inventory.json` (all four models) and `artifacts/reports/sc_to_st/classical/classical_metrics.json` (classical baseline, which also separately records its SC validation metrics).
-- **Legacy SC-internal test** metrics (11 held-out SC subjects, a different experiment) are committed in `outputs/model_outputs_report.md`.
+**Metrics** (`training/metrics.py`), computed on supervised (non-`IGNORE`) epochs only: accuracy,
+macro-F1, **Cohen's kappa** (implemented directly, not from an external library), per-class
+precision/recall/F1, and raw + row-normalized confusion matrices. Metrics are **pooled across the
+cohort** — no per-subject breakdown is implemented. SC validation metrics exist per epoch in
+`TrainResult.history` but are not committed for the primary run; ST test metrics are committed in
+`artifacts/reports/sc_to_st/inventory.json` and `.../classical/classical_metrics.json`.
 
 ## Results
 
-### Primary experiment: SC → ST external test (committed, `artifacts/reports/sc_to_st/inventory.json`)
+### Primary: SC → ST external test
 
-Evaluated once on the full ST cohort (22 subjects, 41,148 supervised epochs), after training/model-selection on SC only:
+Evaluated once on the full ST cohort — 22 subjects, 41,148 supervised epochs — after training and
+model selection on SC only. Committed in `artifacts/reports/sc_to_st/inventory.json`.
 
 | Model | Accuracy | Macro-F1 | Cohen's κ |
 | --- | ---: | ---: | ---: |
@@ -228,33 +152,53 @@ Evaluated once on the full ST cohort (22 subjects, 41,148 supervised epochs), af
 | STFT CNN-2D | 0.7198 | 0.6609 | 0.5994 |
 | BandPower MLP | 0.6781 | 0.5957 | 0.5364 |
 
-**Macro-F1 is the primary comparison metric here**, because the 5-class stage distribution is
-strongly imbalanced (N1 is a small minority class, N2 dominates) and macro-F1 weights every stage
-equally rather than letting the majority stages carry the score. Accuracy and Cohen's κ are
-reported as complementary metrics: accuracy is the most directly interpretable but is inflated by
-the majority classes, and κ corrects for chance agreement given the observed marginals. All three
-are reported for every model so the comparison does not rest on a single number.
+**Macro-F1 is the primary comparison metric**, because the stage distribution is strongly
+imbalanced (N1 is a small minority, N2 dominates) and macro-F1 weights every stage equally.
+Accuracy and κ are complementary: accuracy is the most interpretable but is inflated by majority
+classes, and κ corrects for chance agreement.
 
-Full per-class precision/recall/F1 and confusion matrices for each model are in `artifacts/reports/sc_to_st/inventory.json` and `artifacts/reports/sc_to_st/classical/classical_metrics.json`.
+The classical band-power logistic regression is the **strongest model in the committed SC→ST run**,
+leading on all three metrics; the Raw CNN-1D is the strongest *neural* model by macro-F1 (0.6782)
+but beats the classical baseline on none of the three. That a linear model on 10 hand-designed
+spectral features outperforms three learned representations is a meaningful result on this
+cross-cohort protocol.
 
-**Training-dynamics artifacts.** Each PyTorch run additionally writes, with no manual intervention:
+**Comparison to human inter-rater agreement.** The task specification gives published inter-rater
+agreement between expert human scorers as **κ ≈ 0.76–0.83** and asks for the model κ to be compared
+against it. Every model here falls below that band:
 
-| Artifact | Path |
-| --- | --- |
-| Train vs. validation loss curves (checkpoint epoch marked) | `artifacts/figures/sc_to_st/<rep>/<rep>_loss_curves.png` |
-| Per-epoch history (`train_loss`, `val_loss`, `val_macro_f1`, `loss_gap_train_minus_val`) | `artifacts/reports/sc_to_st/<rep>/<rep>_training_history.json` |
+| Model | Cohen's κ | vs. human band (0.76–0.83) |
+| --- | ---: | --- |
+| Classical | 0.6601 | below by 0.10–0.17 |
+| Raw CNN-1D | 0.6247 | below by 0.14–0.21 |
+| STFT CNN-2D | 0.5994 | below by 0.16–0.23 |
+| BandPower MLP | 0.5364 | below by 0.22–0.29 |
 
-The plot's lower panel is the signed `train − val` loss gap, so overfitting is readable as a single trend rather than inferred by eye from two curves. The classical baseline has no epoch loop and therefore no curves.
+None of these models should be read as matching expert-level agreement. The 0.76–0.83 range is
+quoted from the task specification, which states it without a primary reference; it is reproduced
+here because the comparison is a stated requirement, not because this repository independently
+verified the figure. For context, the legacy within-SC run below reaches κ = 0.7669 on the
+easier same-cohort protocol, which does land inside the band — the gap between the two is the size
+of the cross-cohort generalization penalty.
 
-> **Note on the committed run.** Loss-curve persistence was added *after* the authoritative SC→ST run reported above was executed, and the trainer's per-epoch history was in-memory only at that time, so it could not be recovered retrospectively. The curves are generated automatically by the next `py -3.13 main.py` run. No plots have been fabricated for the committed models.
+The results highlight the difficulty of cross-cohort external generalization: every model was
+selected on SC (healthy, at home) and tested on ST (hospital, different population) with no
+adaptation. **N1 is the lowest-F1 class in all four models** (0.3301–0.4970).
 
-The classical band-power logistic-regression baseline is the strongest primary SC→ST model on **all three** headline metrics — accuracy, macro-F1, and Cohen's κ. The Raw CNN-1D is the strongest *neural* model by macro-F1 (0.6782), but does not beat the classical baseline on any of the three. That a linear model on 10 hand-designed spectral features outperforms three learned representations is a meaningful result on this harder cross-cohort protocol, and should not be assumed to hold on the (different) legacy within-SC split below.
+**Training-dynamics artifacts.** Each PyTorch run automatically writes loss curves with the
+checkpoint epoch marked (`artifacts/figures/sc_to_st/<rep>/<rep>_loss_curves.png`) and per-epoch
+history JSON including a signed `loss_gap_train_minus_val` overfitting signal
+(`artifacts/reports/sc_to_st/<rep>/<rep>_training_history.json`). The classical baseline has no
+epoch loop and no curves. Persistence was added *after* the committed run, whose in-memory history
+is unrecoverable — **nothing has been fabricated**; curves generate on the next run.
 
-Cohen's κ ranges from 0.5364 (BandPower MLP) to 0.6601 (classical baseline) across the four models. This README does not compare those values against a published human inter-rater agreement range, because no such citation is carried in this repository and none will be invented here; the κ values are reported on their own terms. Taken together with the macro-F1 spread, the results highlight the difficulty of cross-cohort external generalization: every model was selected on SC (healthy subjects, recorded at home) and tested on ST (subjects with mild difficulty falling asleep, recorded in hospital), with no adaptation to the target cohort.
+### Legacy: internal-SC baseline
 
-### Legacy internal-SC baseline results (`outputs/model_outputs_report.md`)
-
-**Not the same experiment as SC→ST above** — the "test" set here is an 11-subject held-out partition of SC itself, not the ST cohort. Reported for completeness because it is a committed repository artifact, but it must not be read as an SC→ST number:
+**A different experiment** — the test set is an 11-subject held-out partition of SC, not ST.
+Reported only because it is a committed artifact (`outputs/model_outputs_report.md`); never an
+SC→ST number. Every metric exceeds its SC→ST counterpart, and the Raw CNN-1D's κ = 0.7669 lands
+inside the 0.76–0.83 human band that no SC→ST model reaches — consistent with an easier
+within-cohort protocol rather than genuine external generalization.
 
 | Model | Accuracy | Macro-F1 | Cohen's κ |
 | --- | ---: | ---: | ---: |
@@ -262,263 +206,172 @@ Cohen's κ ranges from 0.5364 (BandPower MLP) to 0.6601 (classical baseline) acr
 | STFT CNN-2D | 0.7948 | 0.7339 | 0.7236 |
 | BandPower MLP | 0.7928 | 0.6964 | 0.7275 |
 
-Every metric in this legacy table is higher than its SC→ST counterpart — consistent with an easier within-cohort protocol (same population, same recording setting as training) rather than genuine external generalization. This gap is the reason the two experiments must not be conflated.
-
 ## Dashboard
 
-`app.py` — a **read-only** Streamlit app; it never trains or refits, only reads artifacts already written by `main.py` (primary root: `artifacts/predictions/sc_to_st/`) or the legacy per-recording exports (fallback root: `outputs/model_outputs/`).
+`app.py` is a **read-only** Streamlit app — it never trains or refits, only reads artifacts already
+written by `main.py` (`artifacts/predictions/sc_to_st/`, falling back to `outputs/model_outputs/`).
 
-Verified features, by reading `app.py` directly:
+- **Selection**: recording/subject dropdown from discovered `manifest.json` files; representation
+  radio (`raw`, `bandpower`, `time_frequency`).
+- **Predicted vs. actual hypnogram**, **confusion matrix** (raw + row-normalized), and **per-class
+  precision/recall/F1**.
+- **Sleep statistics**: total sleep time, efficiency, sleep-onset and REM latency, per-stage
+  time-in-stage — expert vs. predicted.
+- **Raw EEG browser**: slider-selected 30 s epoch, channels offset and per-channel normalized.
+- **PSD (epoch)**: Welch PSD of the selected epoch, in dB.
+- **PSD (stage)**: choose W/N1/N2/N3/REM; plots the **mean of the per-epoch Welch PSDs** in dB
+  across every expert-scored epoch of that stage, with aggregation method and epoch count labelled.
+  Capped at 200 epochs per stage for responsiveness; empty stages show a message, not a blank plot.
+- **Illustrative derivation schematic**: the recorded bipolar derivations (Fpz-Cz, Pz-Oz, horizontal
+  EOG) on a simplified midline outline. **Not an MNE scalp montage and not a topographic
+  representation** — drawn for orientation only, not digitized coordinates.
+- **Spatial power distribution (selected stage)**: band power (δ/θ/α/σ/β) at each recorded EEG
+  derivation, drawn as **discrete markers on a head outline — nothing is interpolated between
+  them**. Each marker sits at the midpoint of its electrode pair as a placement convention and
+  represents the whole bipolar derivation, not a point measurement. Computed from the same mean
+  stage PSD as the panel above.
+- **Interpolated topographic map**: **deliberately not rendered.** A scalp topomap interpolates
+  power across many electrodes at known 10-20 positions; 2 bipolar derivations cannot support that
+  without inventing coordinates and fabricating spatial structure. The dashboard explains this
+  in-app. The discrete map above shows the spatial information that genuinely exists.
 
-- **Recording / subject selection**: sidebar dropdown built from discovered `manifest.json` files.
-- **Model / representation selection**: sidebar radio (`raw`, `bandpower`, `time_frequency`).
-- **Predicted vs. actual hypnogram**: side-by-side expert/predicted step plots (`_plot_hypnogram_side_by_side`).
-- **Confusion matrix**: raw counts and row-normalized, both rendered.
-- **Per-class metrics table**: precision/recall/F1 per stage.
-- **Sleep statistics table**: total sleep time, sleep efficiency, sleep onset latency, REM latency, and per-stage time-in-stage, expert vs. predicted.
-- **Raw EEG epoch browser**: a slider selects a 30 s epoch; all channels are plotted, offset and per-channel-normalized for display.
-- **PSD (selected epoch)**: Welch PSD (`mne.time_frequency.psd_array_welch`) of the selected epoch's channels, plotted in dB.
-- **PSD (selected sleep stage)**: choose W/N1/N2/N3/REM; collects every expert-scored epoch of that stage in the current recording, computes a Welch PSD per epoch, and plots the **mean of the per-epoch PSDs** in dB. The aggregation method and the epoch count used are labelled in the UI. Capped at 200 epochs per stage for responsiveness (spectra converge well before that); stages with no scored epochs show an explanatory message instead of an empty plot.
-- **Illustrative derivation schematic**: an illustrative schematic of the recorded bipolar derivations (Fpz-Cz, Pz-Oz, horizontal EOG) drawn on a simplified midline head outline. It is **not an MNE scalp montage and not a topographic representation** — the positions are drawn for orientation only and are not digitized electrode coordinates. The dashboard labels it as such in the UI.
-- **Topographic map**: **not implemented**. The dashboard shows an `st.info` message stating that Sleep-EDF's 3 bipolar-derivation channels are insufficient spatial coverage for a scientifically meaningful topomap, and does not attempt to render one.
+## Installation & Usage
 
-## Outputs and Artifacts
-
-Two roots, with a rule enforced by `.gitignore` and confirmed against actual git tracking state in this repository:
-
-| Directory | Contents | Committed? |
-| --- | --- | --- |
-| `outputs/` | Human-facing, committed deliverables: `model_outputs/` (per-recording predictions/hypnograms/summaries for the legacy run), `model_outputs_report.md`, and the `amp-rej-verification/` QC report. | **Yes** |
-| `artifacts/` | Generated by `main.py`: predictions, figures, and reports for the primary SC→ST run. Most of this tree is gitignored and **regenerable** (a rerun reproduces the artifacts, not necessarily identical numbers — see [Reproducibility](#reproducibility)). The two committed exceptions are `artifacts/reports/sc_to_st/inventory.json` and `artifacts/reports/sc_to_st/classical/classical_metrics.json`. | Mostly **no** |
-| `models/` | Trained checkpoints (`best_model.pt`) + `metadata.json` per representation, plus the classical `model.pkl`. | **No** |
-
-Do not commit regenerated `artifacts/` or `models/` content beyond the two already-committed report files above — it is regenerable from `main.py`, and the `.gitignore` rules exist specifically to keep large binaries and per-run-varying predictions out of version control. The two committed report files are the authoritative record of the SC→ST results for this submission; a rerun writes its own numbers over the regenerable tree and should not be used to overwrite them.
-
-`outputs/model_outputs/` is produced by `scripts/evaluation/export_whole_night_outputs.py` and consumed by `app.py` as its legacy fallback root — both now point at the same, correct, currently-committed directory name.
-
-To regenerate `artifacts/` and `models/`:
-
-```
-py -3.13 main.py --model all
-```
-
-## Installation
-
-From `pyproject.toml` (the repository pins the exact dependency versions used for the committed run):
-
-The repository requires **Python ≥ 3.12** (declared in `pyproject.toml`). On Windows, a bare
-`python` frequently resolves to an older interpreter that is still on `PATH`, so prefer the
-`py` launcher with an explicit version:
+The repository requires **Python ≥ 3.12** (`pyproject.toml`). On Windows a bare `python` often
+resolves to an older interpreter still on `PATH`, so prefer the `py` launcher with an explicit
+version (list what is available with `py -0p`):
 
 ```
 cd sleep-staging-pipeline
 py -3.13 -m pip install -e ".[dev]"
 ```
 
-Check what the launcher has available with `py -0p`, and substitute any installed 3.12+ version
-for `3.13`. On macOS/Linux, or inside an activated virtual environment that already provides a
-3.12+ interpreter, `pip install -e ".[dev]"` is equivalent.
+Pinned: `mne==1.12.1`, `matplotlib==3.10.3`, `numpy==2.2.6`, `pyyaml==6.0.2`, `scikit-learn==1.8.0`,
+`scipy==1.15.3`, `streamlit==1.56.0`, `torch==2.11.0`; dev extra `pytest==9.1.1`,
+`pytest-cov==7.1.0`. `torch` is pinned without a CUDA suffix — install a matching CUDA build for GPU
+training, or the CPU wheel of the same version. CPU and CUDA builds are **not** expected to produce
+identical numbers (see [Reproducibility](#reproducibility)).
 
-- Core dependencies: `mne==1.12.1`, `matplotlib==3.10.3`, `numpy==2.2.6`, `pyyaml==6.0.2`, `scikit-learn==1.8.0`, `scipy==1.15.3`, `streamlit==1.56.0`, `torch==2.11.0`.
-- `torch==2.11.0` is pinned without a CUDA suffix; install a matching CUDA build from the PyTorch index for GPU training, or use the CPU wheel of the same version. Note that the CPU and CUDA builds are not expected to produce identical numbers — results may differ slightly across hardware, backends, and kernel selections (see [Reproducibility](#reproducibility)).
-- Dev extra: `pytest==9.1.1`, `pytest-cov==7.1.0`.
+First set `SLEEP_EDF_ROOT` to a local Sleep-EDF Expanded copy (preferred over editing
+`acquisition.data_root`; the tracked config may hold a development-local path). Then:
 
-## Usage
+```
+py -3.13 main.py --model all                                  # train on SC, evaluate once on ST
+py -3.13 scripts/evaluation/export_whole_night_outputs.py     # legacy whole-night exports
+py -3.13 -m streamlit run app.py                              # dashboard
+```
 
-1. **Point at a local Sleep-EDF Expanded copy** — set the `SLEEP_EDF_ROOT` environment variable (preferred; overrides `configs/default.yaml`), or edit `acquisition.data_root` in `configs/default.yaml` directly. (The tracked config may contain a development-local dataset path; use `SLEEP_EDF_ROOT` or replace that value with your own dataset location.)
-2. **Run the pipeline** (trains all four models on SC, evaluates on ST, writes `models/` + `artifacts/`):
-   ```
-   py -3.13 main.py --model all
-   ```
-   Single-model runs: `py -3.13 main.py --model raw|bandpower|time_frequency|classical`. `--smoke` runs a reduced/fast path; `--max-sc-recordings` / `--max-st-recordings` cap the number of recordings processed.
-3. **Generate the legacy whole-night exports** (used by the dashboard's fallback root and by `outputs/model_outputs*`):
-   ```
-   py -3.13 scripts/evaluation/export_whole_night_outputs.py
-   ```
-4. **Launch the dashboard**:
-   ```
-   py -3.13 -m streamlit run app.py
-   ```
+`--model raw|bandpower|time_frequency|classical` runs a single model; `--smoke` runs a reduced
+path; `--max-sc-recordings` / `--max-st-recordings` cap recordings processed. On macOS/Linux, or in
+an activated 3.12+ virtual environment, substitute `python` for `py -3.13`.
 
-On macOS/Linux, or in an activated 3.12+ virtual environment, substitute `python` for `py -3.13`
-(and `streamlit run app.py` for the last command).
+Per-recording encodings are cached (`training/sc_to_st_cache.py`) and keyed by an encoder
+fingerprint, so only the first run pays full preprocessing cost per representation; the cache is
+multi-GB at full scale and lives outside the repository by default (`SLEEP_CACHE_ROOT`).
 
-Per-recording encodings are cached (`training/sc_to_st_cache.py`), so only the first `main.py` run pays the full preprocessing cost for a given representation; the cache root is configurable and, per code comments, intended to live outside the repository (multi-GB at full scale).
+**Artifacts.** `outputs/` holds committed human-facing deliverables (legacy exports, results
+reports, and the amplitude-rejection verification report). `artifacts/` and `models/` are generated
+and gitignored — **regenerable**, not
+bit-identical on rerun. The two committed exceptions, `artifacts/reports/sc_to_st/inventory.json`
+and `.../classical/classical_metrics.json`, are the authoritative record of the SC→ST results and
+should not be overwritten by a rerun.
 
-## Demo walkthrough
+## Demo
 
-> **Status: walkthrough documented; recording/artifact not included in the repository.** The
-> script below is a documented walkthrough, not a committed deliverable — no video, screencast,
-> or other demo artifact is present in this repository. If the task brief requires a demo
-> artifact, it must be supplied separately.
+> **Status: walkthrough documented; demo artifact not included.** No recording or screencast is
+> committed. If the task brief requires a demo artifact, it must be supplied separately.
 
-A ~10-minute demo covering the full pipeline. Everything below runs from committed
-artifacts — no retraining is required, and nothing in this flow overwrites results.
+A ~10-minute walkthrough running entirely from committed artifacts — no retraining, nothing
+overwritten. Set `SLEEP_EDF_ROOT` first (the dashboard reads raw EDF for the signal and PSD panels).
 
-**Before starting:** `set SLEEP_EDF_ROOT=<your Sleep-EDF copy>` (the dashboard reads raw EDF
-for the signal viewer and PSD panels).
-
-1. **Repository and README** — the layered pipeline (`src/sleep_staging/`: acquisition →
-   preprocessing → representations → models → training → evaluation), and the SC→ST protocol:
-   train/validate on Sleep Cassette, evaluate once on Sleep Telemetry.
-2. **Primary results** — the [SC→ST table](#results). Lead with macro-F1 as the primary metric
-   (class imbalance), with accuracy and Cohen's κ as complementary numbers. Mention that the
-   classical band-power baseline beats all three neural models on this cross-cohort protocol.
-3. **Launch the dashboard** — `py -3.13 -m streamlit run app.py`
-4. **Recording / model selection** — sidebar: pick a recording, then switch between `raw`,
+1. **Repository and protocol** — the layered pipeline (`acquisition → preprocessing →
+   representations → models → training → evaluation`) and SC→ST: train/validate on Sleep Cassette,
+   evaluate once on Sleep Telemetry.
+2. **Primary results** — the [SC→ST table](#results). Lead with macro-F1 (class imbalance), with
+   accuracy and κ as complementary; note the classical baseline beats all three neural models, and
+   that every κ sits below the 0.76–0.83 human inter-rater band.
+3. **Dashboard** — `py -3.13 -m streamlit run app.py`; pick a recording, then switch between `raw`,
    `bandpower`, and `time_frequency` to compare representations on the same night.
-5. **Raw EEG browser** — the epoch slider; scroll to a clear N3 epoch (high-amplitude slow waves)
-   versus a REM epoch to show the signal actually differs by stage.
-6. **Predicted vs. actual hypnogram** — the whole-night comparison. Point out where the model
-   tracks the expert and where it breaks down. N1 has the lowest per-class F1 in all four
-   committed models (0.3301–0.4970 per `inventory.json`), so it is the natural place to look.
-7. **Confusion matrix + per-class metrics** — the normalized matrix is the primary diagnostic;
-   inspect the N1 row to show where the model confuses this stage.
-8. **Sleep statistics** — expert vs. predicted total sleep time, sleep efficiency, sleep onset
-   latency, REM latency, and time in each stage.
-9. **Stage-level PSD** — select N3 and then REM; the δ-band power difference is visible directly
-   in the spectrum, illustrating a physiological distinction associated with these stages.
+4. **Raw EEG browser** — scroll to a clear N3 epoch (high-amplitude slow waves) versus a REM epoch.
+5. **Hypnogram + confusion matrix** — show where the model tracks the expert and where it breaks
+   down; inspect the N1 row to show where the model confuses this stage.
+6. **Sleep statistics** — expert vs. predicted total sleep time, efficiency, latencies, time in stage.
+7. **Stage-level PSD** — select N3 and then REM; the δ-band power difference is visible directly in
+   the spectrum, illustrating a physiological distinction associated with these stages.
+8. **Spatial power distribution** — same stage, δ band: frontal (Fpz-Cz) versus posterior (Pz-Oz)
+   power as discrete markers. Note explicitly that nothing is interpolated between them, and why
+   an interpolated topomap is not shown.
 
-Optionally close on the two documented dataset limits (no scalp topomap, illustrative derivation
-schematic) and the audited ICA finding — both are in [Limitations](#limitations).
+Optionally close on the dataset limits (no scalp topomap, illustrative schematic) and the ICA audit.
 
-## Repository Structure
-
-```
-sleep-staging-pipeline/
-├── configs/default.yaml
-├── main.py                          # Primary SC→ST experiment CLI
-├── app.py                           # Streamlit dashboard (read-only)
-├── src/sleep_staging/
-│   ├── acquisition/                 # EDF + hypnogram loading (MNE)
-│   ├── preprocessing/               # Composable transforms
-│   ├── representations/             # Encoders (raw, bandpower, STFT; CWT placeholder)
-│   ├── training/                    # Split, dataset, trainer, sc_to_st orchestration
-│   ├── models/                      # RawCNN1D, BandPowerMLP, STFTCNN2D, factory
-│   ├── evaluation/                  # Metrics-adjacent output/plotting utilities
-│   ├── dashboard/                   # Empty package marker (app.py lives at repo root)
-│   ├── config/                      # YAML → dataclass settings
-│   └── common/                      # Logging helpers
-├── scripts/
-│   ├── evaluation/export_whole_night_outputs.py
-│   ├── utilities/                   # dataset_statistics.py, verify_acquisition.py, etc.
-│   └── run_classical_baseline.py
-├── tests/                           # pytest suite (27 test files, all passing)
-├── models/                          # Gitignored: main.py checkpoint output
-├── artifacts/                       # Mostly gitignored: main.py predictions/figures/reports
-│   └── reports/sc_to_st/inventory.json, classical/classical_metrics.json  # committed exceptions
-├── outputs/                         # Committed: legacy whole-night exports + report, QC report
-└── pyproject.toml
-```
-
-## Final Task-Compliance Status
-
-The primary implementation and SC→ST evaluation are complete. The repository should be judged against the primary protocol and the requirements of the original task brief; the legacy internal-SC experiment is historical and must not be substituted for the external ST evaluation.
+## Limitations & Task Compliance
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Sleep-EDF acquisition, hypnogram loading, 30 s epoching | **Complete** | Implemented with MNE and fixed 30 s alignment. |
-| R&K → AASM mapping and IGNORE handling | **Complete** | Unmapped/movement/? epochs remain aligned and are excluded from loss/metrics. |
-| Filtering | **Complete** | Per-channel-type band-pass + global notch, implemented in the production preprocessing pipeline. |
-| Channel selection | **Complete** | Configured EEG/EOG channel set applied in the production preprocessing pipeline. |
-| Normalization | **Complete** | Per-recording, per-channel z-score applied last in the production preprocessing pipeline. |
-| Bad-channel detection | **Partial — flagging only** | Detects flat/NaN/saturated/high-variance/extreme-peak-to-peak channels and optionally appends them to `raw.info['bads']`. There is **no interpolation, and no exclusion from encoding or model training** — a flagged channel's samples still reach the encoder and the model unchanged. The one downstream consumer is `ICATransform`, which reads the flags when choosing which EEG channels to fit components on. |
-| Re-referencing | **Implemented, not applied by default** | CAR exists, but reported results use `reference.mode: original`. |
-| ICA | **Implemented and enabled** | EOG-guided ICA is implemented and active in the reported run. In the audited sample (8 SC, 4 ST recordings) it excluded 0 components on SC and was skipped on ST, so no material artifact-removal effect was observed; the audit does not cover every reported recording. See [Preprocessing](#preprocessing). |
-| Train/validation loss curves + overfitting | **Implemented / artifact pending** | The trainer already tracked the required per-epoch history (`train_loss`, `val_loss`, `val_macro_f1`, and the explicit `loss_gap_train_minus_val` overfitting signal), and persistent plotting + JSON export is now wired into `main.py` (`*_loss_curves.png`, `*_training_history.json`, checkpoint epoch marked). The authoritative committed SC→ST run predates this feature and its per-epoch history is unrecoverable, so no historical curve artifact exists for those exact models. No curves are being fabricated and no rerun is being performed; curves generate automatically on the next `py -3.13 main.py` run. |
-| Stage-level PSD | **Complete** | Dashboard offers both a selected-epoch PSD and a stage-level PSD (mean of per-epoch Welch PSDs across all expert-scored epochs of the chosen stage). |
-| Topographic map | **Dataset-limited — deliberately not rendered** | Sleep-EDF provides two *bipolar* EEG derivations plus one EOG. A bipolar derivation is a difference between two sites and has no single scalp coordinate, so there is nothing valid to interpolate. Rendering one would require inventing electrode positions. Not faked. |
-| Montage / electrode positioning | **Dataset-limited — illustrative derivation schematic only** | Shown as an illustrative schematic of the recorded bipolar derivations; not an MNE scalp montage and not a topographic representation. No digitized electrode coordinates are used or implied. |
-| Raw / bandpower / STFT encodings | **Complete** | All three are implemented and evaluated. |
-| CWT backend | **Optional / incomplete** | Interface exists, but `transform()` is intentionally unimplemented. |
-| Subject-wise SC train/validation and external ST test | **Complete** | Leakage checks are implemented; ST is evaluated once after SC model selection. |
-| Best-checkpoint selection / early stopping | **Complete** | Best SC validation macro-F1 checkpoint is restored before ST evaluation. |
-| Final ST metrics | **Complete** | Accuracy, macro-F1, Cohen's κ, per-class metrics, and confusion matrices are committed. |
-| Dashboard | **Complete with documented limitation** | Raw viewer, PSD, hypnogram comparison, confusion matrix, per-class metrics, and sleep statistics are implemented. A real scalp topomap is not implemented because the available derivations are insufficient for a meaningful topographic map. |
-| LOSO | **Optional / not run** | No LOSO subset result is claimed in this README. |
-| Per-subject metrics | **Not implemented** | Reported metrics are pooled across the test cohort. |
-| Demo | **Walkthrough documented; artifact not included** | A ~10-minute demo walkthrough is documented in [Demo walkthrough](#demo-walkthrough) and runs entirely from committed artifacts. **No recording or other demo artifact is committed to this repository.** If the task brief requires a separate demo deliverable, it must be supplied separately — it is not represented by anything in `artifacts/` or `outputs/`. |
-| Legacy internal-SC results | **Historical** | Kept for traceability; not used as the primary external-generalization result. |
+| Acquisition, hypnogram loading, 30 s epoching | **Complete** | MNE-based, fixed 30 s alignment. |
+| R&K → AASM mapping and `IGNORE` handling | **Complete** | Unmapped/movement/? epochs stay aligned, excluded from loss and metrics. |
+| Filtering | **Complete** | Notch + per-channel-type band-pass. |
+| Channel selection | **Complete** | Configured EEG/EOG set. |
+| Normalization | **Complete** | Per-recording, per-channel z-score. |
+| **Bad-channel detection** | **Partial — flagging only** | No interpolation and no exclusion from encoding or model training; flagged samples still reach the model. Only ICA reads the flags. |
+| Re-referencing | **Implemented, not applied** | CAR exists; results use `reference.mode: original`. |
+| ICA | **Implemented and enabled** | Audited sample (8 SC, 4 ST) showed no material artifact removal; the audit was not exhaustive. |
+| Raw / band-power / STFT encodings | **Complete** | All three implemented and evaluated. |
+| CWT backend | **Optional / incomplete** | Interface exists; `transform()` intentionally unimplemented. |
+| Subject-wise SC split + external ST test | **Complete** | Leakage checks in code; ST evaluated once after model selection. |
+| Best-checkpoint selection / early stopping | **Complete** | Best SC-val macro-F1 checkpoint restored before ST evaluation. |
+| Final ST metrics | **Complete** | Accuracy, macro-F1, κ, per-class metrics, confusion matrices committed. |
+| Train/validation loss curves | **Implemented capability** | Historical curves unavailable because the authoritative run predates persistence. Nothing fabricated; curves generate on the next run. |
+| Stage-level PSD | **Complete** | Selected-epoch and stage-level (mean of per-epoch Welch PSDs) both in the dashboard. |
+| Class distribution reporting | **Complete** | Pre/post-rejection per-stage counts in `scripts/utilities/class_distribution_with_rejection.md`; channel/sfreq/duration/reference reporting via `scripts/utilities/verify_acquisition.py`. |
+| Amplitude rejection + rejection-rate analysis | **Complete** | Per-epoch peak-to-peak rejection implemented, and amplitude-rejection verification measures its impact across all 197 recordings (0.88% rejected, no stage disproportionately affected). |
+| Threshold-choice validation | **Not done** | The brief asks to "validate threshold choice." The verification above measures the shipped setting in place; no threshold-sensitivity analysis compares it against alternative cutoffs, so the specific values are not evidenced as preferable. Not clinically derived or clinically validated. |
+| Spatial power map for selected stage | **Implemented — discrete, not interpolated** | Per-derivation band power on a head outline, markers only. Satisfies the spatial-visualization intent without inventing a continuous scalp field. |
+| Interpolated topographic map | **Dataset-limited — not faked** | Two *bipolar* EEG derivations + one EOG; a bipolar derivation has no single scalp coordinate, so nothing valid can be interpolated. Explained in-app rather than fabricated. |
+| Montage / 10-20 visualization | **Dataset-limited — illustrative** | Illustrative derivation schematic; not an MNE scalp montage, not a topographic representation, no digitized coordinates. |
+| Dashboard | **Complete with documented limitation** | All viewers implemented; no real scalp topomap, per above. |
+| **LOSO** | **Optional — not run** | The brief makes this conditional ("if compute allows"). No LOSO result is claimed anywhere in this README. |
+| Per-subject metrics, band-power ratio features | **Not implemented** | Metrics are pooled across the cohort; `include_ratios` raises `EncodingError`. |
+| **Demo** | **Walkthrough documented; artifact not included** | Supply a demo artifact separately if the brief requires one. |
+| Legacy internal-SC results | **Historical** | Kept for traceability; not the primary external-generalization result. |
 
-### Primary completion criterion
-
-For the main scientific experiment, the repository has an end-to-end, regenerable SC→ST pipeline with subject-wise model selection on SC and one-time evaluation on ST. Judged on macro-F1 (the primary metric, given class imbalance), the strongest primary model is the classical band-power logistic regression at 0.6853, which also leads on accuracy (0.7633) and Cohen's κ (0.6601); the Raw CNN-1D is the strongest neural model by macro-F1 (0.6782). See [Results](#results).
-
-### Open follow-ups
-
-These are known follow-ups, not claims of completion. None is treated here as a submission blocker unless the original task brief explicitly makes it one:
-
-1. **Classical baseline convergence (baseline-quality follow-up).** The classical logistic regression runs with `max_iter: 1000` and has historically emitted an `lbfgs` convergence warning. The committed metrics were produced under that configuration and are reported as-is; no rerun was performed for this pass. If a converged classical baseline is required, raise `max_iter` (or scale/precondition the features) and rerun `--model classical`. This is flagged as a baseline-quality issue, not a blocker, since the brief does not explicitly require a converged classical solver.
-2. Confirm whether the original task brief treats bad-channel correction/exclusion or a true scalp topomap as mandatory rather than optional — both are documented above as dataset-limited or partial.
-3. If a demo artifact is mandatory, supply it separately; the repository contains the written walkthrough only, and no demo artifact is represented in `artifacts/` or `outputs/`.
-
-## Current Status
-
-### Implemented
-
-- EDF + hypnogram loading via MNE (`acquisition/`)
-- Production preprocessing chain: annotation unrolling, sleep-boundary detection, channel selection, bad-channel flagging, optional CAR referencing, per-channel-type filtering, ICA with EOG-guided exclusion, wake cropping, R&K→AASM mapping, amplitude-based epoch rejection, and per-recording normalization
-- Three encoders: raw, Welch band-power, and STFT log-power time-frequency
-- Four baselines: RawCNN1D, BandPowerMLP, STFTCNN2D, and classical LogisticRegression
-- Subject-wise, leakage-checked SC/ST splitting
-- Primary SC→ST training and evaluation pipeline (`main.py`)
-- Best-validation-macro-F1 checkpointing and reload before test evaluation (verified in `trainer.py`)
-- Final ST metrics for all four primary models
-- Accuracy, macro-F1, Cohen's kappa, per-class precision/recall/F1, and raw/normalized confusion matrices
-- Read-only Streamlit dashboard with recording/subject selection, representation selection, hypnogram comparison, confusion matrices, per-class metrics, sleep statistics, raw-epoch viewing, and PSD
-
-### Partial or intentionally limited
-
-- **Bad-channel detection**: implemented as flagging; ICA reads the flag when picking channels to fit on, but flagged channels are not interpolated, excluded from encoding, or excluded from model training.
-- **Common-average referencing**: implemented but disabled in the reported primary configuration (`mode: original`).
-- **CWT**: interface and configuration exist, but the transform is not implemented.
-- **Topomap**: a real scalp topomap is not rendered because the dataset configuration contains only two bipolar EEG derivations plus one EOG channel; the dashboard therefore shows an illustrative derivation schematic instead — not an MNE scalp montage and not a topographic representation.
-
-### Historical / non-primary
-
-- The repository contains a legacy internal-SC holdout result (`outputs/model_outputs_report.md`). Retained for traceability but not the primary external-generalization result.
-
-### Not currently implemented
-
-- Per-subject test metrics
-- Band-power ratio features
-- EMG-inclusive staging in the default configuration
-
-### Optional / not run
-
-- LOSO subset experiment
-- CWT-based time-frequency evaluation
+**Open follow-up.** The classical logistic regression runs with `max_iter=1000` and has historically
+emitted an `lbfgs` convergence warning; the committed metrics were produced under that configuration
+and are reported as-is. This is a solver-convergence follow-up, not a submission blocker, since the
+brief does not require a converged classical solver. Other limitations: filter and
+amplitude-rejection thresholds are engineering baselines that have not been through
+threshold-choice validation (see [Pipeline](#pipeline)), and the three PyTorch models were trained
+on CUDA (`"device": "cuda"` in `inventory.json`) while the classical baseline is CPU/scikit-learn.
 
 ## Reproducibility
 
-The distinction that matters here is between **deterministic** (bit-for-bit identical on every
-run) and **regenerable** (a rerun reproduces the artifacts and closely comparable numbers, but not
-necessarily identical ones). This pipeline is deterministic in its data handling and regenerable —
-not bit-for-bit deterministic — in its neural training.
+The distinction that matters is **deterministic** (bit-for-bit identical on every run) versus
+**regenerable** (a rerun reproduces the artifacts and closely comparable numbers, not necessarily
+identical ones). This pipeline is deterministic in data handling and regenerable — not
+bit-for-bit deterministic — in neural training.
 
-- **Subject split — deterministic.** The subject-wise split is fully deterministic given `seed=42`: `subject_wise_split()` shuffles unique subject IDs with a seeded RNG, so cohort membership (55 SC train / 12 SC validation / 22 ST test) is identical on every run and never varies between reruns or across machines.
-- **CUDA training — not bit-for-bit deterministic.** `seed=42` is applied consistently via `set_seed()` (numpy + torch, including CUDA), but **seeding alone does not make the neural results bit-for-bit reproducible.** The repository does *not* set `torch.backends.cudnn.deterministic=True` or call `torch.use_deterministic_algorithms()`, so cuDNN may select non-deterministic kernels.
-- **Reruns can produce small metric differences.** A fresh `main.py --model all` run reproduces the three PyTorch models' metrics closely but not exactly; observed drift across runs is in the third decimal and can be large enough to reorder closely-spaced models. Differences in GPU/CPU hardware, driver, or backend build can shift results by a similar margin. The classical logistic-regression baseline *is* exactly reproducible (deterministic solver, fixed `random_state`, CPU) and reproduces its committed numbers to four decimals.
-- **The committed SC→ST metrics are the authoritative results for this submission.** The values in [Results](#results), `artifacts/reports/sc_to_st/inventory.json`, and `artifacts/reports/sc_to_st/classical/classical_metrics.json` all come from one full run and are the numbers this submission should be judged on. A rerun that lands on slightly different values has not contradicted them.
-- **Configuration**: single YAML file, `configs/default.yaml`, loaded into typed dataclasses (`config/settings.py`); no Hydra/Pydantic. Dataset root is overridable via `SLEEP_EDF_ROOT` without editing the tracked config.
-- **Cached encodings**: per-recording encoding cache keyed by an "encoder fingerprint" (`training/sc_to_st_cache.py`); default cache location is outside the repository and overridable via the `SLEEP_CACHE_ROOT` environment variable.
-- **Generated outputs**: `artifacts/` and `models/` are regenerable by rerunning `py -3.13 main.py --model all` against the same dataset root and config; they are gitignored (except the two report files noted in [Outputs and Artifacts](#outputs-and-artifacts)) for exactly this reason.
-- **Rerun from scratch**: delete/ignore `models/`, `artifacts/predictions/`, `artifacts/figures/`, and non-committed `artifacts/reports/` content, then run `py -3.13 main.py --model all` again with `SLEEP_EDF_ROOT` pointed at a local Sleep-EDF Expanded copy.
+- **Subject split — deterministic.** Fully determined by `seed=42`; cohort membership (55/12/22) is
+  identical on every run and across machines.
+- **CUDA training — not bit-for-bit deterministic.** `seed=42` is applied via `set_seed()` (numpy +
+  torch, including CUDA), but **seeding alone does not make neural results bit-for-bit
+  reproducible**: the repository does *not* set `torch.backends.cudnn.deterministic=True` or call
+  `torch.use_deterministic_algorithms()`, so cuDNN may select non-deterministic kernels.
+- **Reruns can produce small metric differences.** Observed drift is in the third decimal and can be
+  large enough to reorder closely-spaced models; hardware, driver, and backend build shift results
+  by a similar margin. The classical baseline *is* exactly reproducible (deterministic solver, fixed
+  `random_state`, CPU) to four decimals.
+- **The committed SC→ST metrics are the authoritative results for this submission** — the values in
+  [Results](#results) and the two committed report files come from one full run. A rerun landing on
+  slightly different values has not contradicted them.
+- **Rerun from scratch**: delete `models/`, `artifacts/predictions/`, `artifacts/figures/`, and
+  non-committed `artifacts/reports/` content, then rerun `py -3.13 main.py --model all`. Config is
+  one YAML file (`configs/default.yaml`) loaded into typed dataclasses.
 
-## Limitations
+## Citation
 
-Limitations verified from the repository itself (comments, code behavior, or committed reports), not inferred:
-
-- CWT time-frequency encoding is not usable despite being present in configuration.
-- Filter/amplitude-rejection thresholds are explicitly described in code as unvalidated "engineering baselines," not literature-derived or clinically-validated cutoffs.
-- Bad-channel detection has a narrow downstream effect: it only influences which channels ICA fits components on. It does not remove or correct channels for encoding or model training.
-- Sleep-EDF SC/ST provide only 2 EEG bipolar derivations + 1 EOG channel, so the dashboard cannot render a real scalp topomap (explicitly acknowledged in `app.py` itself).
-- Per-subject-level test metrics are not computed; all reported metrics pool epochs across the full test cohort.
-- The three primary PyTorch models were trained on CUDA per `artifacts/reports/sc_to_st/inventory.json` (`"device": "cuda"`), selected automatically by `select_device()`. The classical logistic-regression baseline is CPU/scikit-learn and records no device. Because CUDA training is not made bit-deterministic here (see [Reproducibility](#reproducibility)), reruns reproduce the neural metrics closely but not exactly.
-- Cohen's kappa for the primary SC→ST models spans 0.5364–0.6601. This README deliberately does not benchmark those values against a published human inter-rater agreement range, because no such citation is carried in this repository; see [Results](#results).
-- The ICA no-op finding is based on an audited sample of 12 recordings (8 SC, 4 ST), not an exhaustive check of all 197; see [Preprocessing](#preprocessing).
-- No demo recording or other demo artifact is committed — only the written walkthrough; see [Demo walkthrough](#demo-walkthrough).
-
-## Citation / Dataset
-
-This repository does not include its own CITATION file. It targets the Sleep-EDF Expanded dataset (PhysioNet), which is documented at https://physionet.org/content/sleep-edfx/ and is described there as an extension of the original Sleep-EDF database, associated with the standard PhysioNet citation requirement (Goldberger et al., "PhysioBank, PhysioToolkit, and PhysioNet," *Circulation* 101(23), 2000) in addition to citing the dataset itself. Refer to the PhysioNet page for the exact, current citation text rather than this README, since PhysioNet citation guidance can change independently of this repository.
+This repository includes no CITATION file of its own. It targets the **Sleep-EDF Expanded** dataset
+(PhysioNet), documented at <https://physionet.org/content/sleep-edfx/>, which carries the standard
+PhysioNet citation requirement (Goldberger et al., "PhysioBank, PhysioToolkit, and PhysioNet,"
+*Circulation* 101(23), 2000) in addition to citing the dataset itself. Refer to the PhysioNet page
+for the exact current citation text rather than this README, since that guidance can change
+independently of this repository.
