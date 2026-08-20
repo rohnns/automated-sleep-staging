@@ -194,6 +194,87 @@ def _plot_confusion_matrices(raw_matrix: Iterable[Iterable[float]], norm_matrix:
     return fig
 
 
+# Band edges match BandPowerEncoder's five bands (no gamma -- the signal is
+# low-passed to 30 Hz upstream, so there is no valid gamma content to report).
+SPATIAL_BANDS: tuple[tuple[str, float, float], ...] = (
+    ("delta", 0.5, 4.0),
+    ("theta", 4.0, 8.0),
+    ("alpha", 8.0, 12.0),
+    ("sigma", 12.0, 16.0),
+    ("beta", 16.0, 30.0),
+)
+
+# Where each recorded EEG derivation is drawn. A bipolar derivation has no
+# single scalp coordinate, so the marker sits at the MIDPOINT of its electrode
+# pair purely as a placement convention -- it labels the whole derivation and
+# must not be read as a point measurement at that location.
+DERIVATION_MIDPOINTS: dict[str, tuple[float, float]] = {
+    "Fpz-Cz": (5.0, 3.95),
+    "Pz-Oz": (5.0, 1.60),
+}
+
+
+def _band_power(psd_row: np.ndarray, freqs: np.ndarray, lo: float, hi: float) -> float:
+    """Mean PSD within a closed frequency band, in dB."""
+    mask = (freqs >= lo) & (freqs <= hi)
+    if not mask.any():
+        return float("nan")
+    return float(10.0 * np.log10(float(np.mean(np.asarray(psd_row)[mask])) + 1e-20))
+
+
+def _plot_spatial_power(
+    ch_names: list[str], psd: np.ndarray, freqs: np.ndarray, band: str, stage: str
+) -> plt.Figure | None:
+    """Plot per-derivation band power as discrete markers on a head outline.
+
+    This is deliberately *not* an interpolated topomap. Sleep-EDF gives two
+    bipolar EEG derivations, which is far too sparse to interpolate a scalp
+    field from without inventing structure. Instead each derivation is drawn as
+    one discrete marker coloured by its band power, so real spatial variation
+    (frontal vs. posterior) is visible while nothing is filled in between.
+    """
+    lo, hi = next((l, h) for name, l, h in SPATIAL_BANDS if name == band)
+    points = [
+        (name, DERIVATION_MIDPOINTS[name], _band_power(row, freqs, lo, hi))
+        for name, row in zip(ch_names, psd, strict=True)
+        if name in DERIVATION_MIDPOINTS
+    ]
+    if not points:
+        return None
+
+    fig, ax = plt.subplots(figsize=(6.4, 5.2), constrained_layout=True)
+    ax.set_xlim(1.5, 8.5)
+    ax.set_ylim(0.3, 5.9)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.add_patch(plt.Circle((5, 3), 2.1, fill=False, lw=2, color="#444444"))
+    ax.plot([4.72, 5, 5.28], [5.05, 5.5, 5.05], color="#444444", lw=2)  # nose
+    ax.text(5, 0.5, "Posterior", ha="center", va="center", fontsize=9, color="#666666")
+
+    values = [v for _, _, v in points]
+    vmin, vmax = (min(values), max(values)) if len(set(values)) > 1 else (min(values) - 1, max(values) + 1)
+    scatter = ax.scatter(
+        [p[1][0] for p in points],
+        [p[1][1] for p in points],
+        c=values,
+        s=2600,
+        cmap="RdYlBu_r",
+        vmin=vmin,
+        vmax=vmax,
+        edgecolor="#222222",
+        linewidth=1.6,
+        zorder=3,
+    )
+    for name, (x, y), value in points:
+        ax.text(x, y + 0.02, f"{value:.1f}", ha="center", va="center", fontsize=10,
+                fontweight="bold", color="white", zorder=4)
+        ax.text(x + 0.95, y, name, ha="left", va="center", fontsize=10, zorder=4)
+
+    fig.colorbar(scatter, ax=ax, fraction=0.046, pad=0.04, label=f"{band} power (dB)")
+    ax.set_title(f"{stage} — {band} power per derivation ({lo:g}–{hi:g} Hz)", fontsize=11)
+    return fig
+
+
 def _plot_10_20_montage(recording) -> plt.Figure:
     """Render a minimal sagittal 10-20 schematic for the recorded bipolar derivations.
 
@@ -396,6 +477,11 @@ stage_choice = st.selectbox("Sleep stage", list(STAGE_NAMES), index=2, key="stag
 stage_idx = STAGE_NAMES.index(stage_choice)
 stage_epochs = [i for i, lab in enumerate(y_true) if int(lab) == stage_idx]
 
+# Reused by the spatial power panel below; stays None when the stage has no
+# usable epochs so that panel can explain itself instead of erroring.
+stage_mean_psd: np.ndarray | None = None
+stage_freqs: np.ndarray | None = None
+
 if not stage_epochs:
     st.info(
         f"No expert-scored **{stage_choice}** epochs in this recording, so no stage-level "
@@ -403,7 +489,7 @@ if not stage_epochs:
     )
 else:
     sfreq = recording.sampling_frequency
-    n_use = min(len(stage_epochs), 200)  # cap work; spectra converge well before this
+    n_use = min(len(stage_epochs), 200)  # cap work for UI responsiveness
     used = stage_epochs[:n_use]
     stack = []
     for ei in used:
@@ -419,6 +505,7 @@ else:
         st.info(f"Could not extract signal for the selected {stage_choice} epochs.")
     else:
         mean_psd = np.mean(np.stack(stack, axis=0), axis=0)
+        stage_mean_psd, stage_freqs = mean_psd, f_ax
         fig_s, ax_s = plt.subplots(figsize=(10, 4), constrained_layout=True)
         for ch_name, row in zip(recording.raw.ch_names, mean_psd, strict=True):
             ax_s.plot(f_ax, 10 * np.log10(np.asarray(row) + 1e-20), label=ch_name)
@@ -436,15 +523,48 @@ else:
             f"(capped at {n_use} for responsiveness)."
         )
 
-st.markdown("### Topographic map")
+st.markdown("### Spatial power distribution for selected stage")
+st.caption(
+    "Band power at each recorded EEG derivation for the stage selected above, drawn as "
+    "**discrete markers — not an interpolated topomap.** Each marker is placed at the midpoint "
+    "of its electrode pair as a placement convention only; it represents the whole bipolar "
+    "derivation, not a point measurement at that spot. Nothing is interpolated between markers."
+)
+
+if stage_mean_psd is None or stage_freqs is None:
+    st.info(
+        f"No usable **{stage_choice}** epochs in this recording, so no spatial power map can be "
+        "computed. Pick another stage above."
+    )
+else:
+    band_choice = st.selectbox(
+        "Frequency band", [name for name, _, _ in SPATIAL_BANDS], index=0, key="spatial_band"
+    )
+    fig_sp = _plot_spatial_power(
+        list(recording.raw.ch_names), stage_mean_psd, stage_freqs, band_choice, stage_choice
+    )
+    if fig_sp is None:
+        st.info(
+            "None of this recording's channels are recognized EEG derivations "
+            f"({', '.join(DERIVATION_MIDPOINTS)}), so no spatial map is shown."
+        )
+    else:
+        st.pyplot(fig_sp, clear_figure=True)
+        st.caption(
+            f"Computed from the same mean {stage_choice} PSD shown above. Compare δ between N3 "
+            "and REM, or across the frontal (Fpz-Cz) and posterior (Pz-Oz) derivations."
+        )
+
+st.markdown("### Why there is no interpolated topographic map")
 st.info(
-    "**Not shown — dataset/channel limitation, not a missing feature.** A scalp topomap "
-    "interpolates power across many electrodes at known 10-20 positions. Sleep-EDF provides "
-    "only two bipolar EEG derivations (Fpz-Cz, Pz-Oz) plus one horizontal EOG. A bipolar "
-    "derivation measures a *difference* between two sites and has no single scalp coordinate, "
-    "so there is nothing valid to interpolate over. Rendering one would require inventing "
-    "electrode positions and fabricating spatial structure the recording does not contain, "
-    "so it is deliberately omitted rather than faked."
+    "**Dataset/channel limitation, not a missing feature.** A scalp topomap interpolates power "
+    "across many electrodes at known 10-20 positions. Sleep-EDF provides only two bipolar EEG "
+    "derivations (Fpz-Cz, Pz-Oz) plus one horizontal EOG. A bipolar derivation measures a "
+    "*difference* between two sites and has no single scalp coordinate, so there is nothing "
+    "valid to interpolate over. Rendering a filled topomap would require inventing electrode "
+    "positions and fabricating spatial structure the recording does not contain. The discrete "
+    "per-derivation map above shows the spatial information that genuinely is available, "
+    "without filling in what is not."
 )
 
 st.caption(f"Artifact source: {selected.root}")
