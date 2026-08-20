@@ -63,14 +63,6 @@ rejection marks epochs `IGNORE` rather than deleting them.
 | 10 | `AmplitudeEpochRejector` | Per-epoch peak-to-peak against per-type thresholds (EEG 5×10⁻⁴ V, EOG/EMG 1×10⁻³ V); non-finite samples also reject. Marks `IGNORE`, never drops. |
 | 11 | `RecordingNormalizer` | Per-recording, per-channel `zscore` (also `robust` / `center`), applied last. Per-recording only — no dataset-wide normalization. |
 
-**ICA audit.** ICA is implemented and enabled because the brief requires the capability. Its actual
-effect was then measured: on **8 SC** recordings it ran, fit 2 components, and excluded **0**
-(signal change 4.4×10⁻¹⁵ relative — machine epsilon, since `ica.apply(exclude=[])` is an identity
-transform); on **4 ST** recordings it was **skipped entirely** (bit-identical), because
-`BadChannelDetector` flags all three channels and ICA then finds fewer than 2 usable EEG channels.
-**The audited sample showed no material artifact removal, and the audit was not exhaustive** — it
-covers 12 of 197 recordings. These results should not be presented as ICA-cleaned.
-
 **Preprocessing verification reports.** Three committed analyses. The first two are
 **rejection-rate analyses** measuring the shipped thresholds in place, and they sample **different
 points in the pipeline**, so their totals are not directly comparable:
